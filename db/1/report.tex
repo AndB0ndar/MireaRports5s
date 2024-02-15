@@ -1,0 +1,190 @@
+\graphicspath{{./1/img/}} % path to graphics
+
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Apache Cassandra --- открытая, распределенная, децентрализованная,
+эластично масштабируемая, высокодоступная, отказоустойчивая, строковая,
+допускающая настройку согласованности база данных, дизайн
+распределенности которой основан на Amazon Dynamo, а модель данных - на
+Google Bigtable. Разработана для социальной сети, ныне используется на
+некоторых из наиболее популярных веб-сайтах.
+
+\textbf{Цель работы} --- познакомится с СУБД Apache Cassandra.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Создание Docker контейнера}
+
+При первоначальном знакомстве с СУБД предлагается не углубляться в
+её распределенную природу, а научиться работать со средствами,
+позволяющими получить быстрый доступ к её основным функциям на одном
+узле. Речь ведётся о средствах контейнеризации Docker. Для этого 
+предлагается пройти регистрацию и установить Docker Desktop на ПК.\par
+Далее необходимо запустить контейнер с Cassandra (рис.~\ref{fig:docker}).
+
+\begin{enumerate}
+	\item Введите в терминале команду:\\
+		\verb|docker run -d –name [имя контейнера][образ]|
+	\item Проверьте работоспособность контейнера командой:\\
+		\verb|docker ps|
+	\item Чтобы взаимодействовать с СУБД, необходимо получить доступ в
+		оболочку для работы с CQL – языком запросов в Cassandra. Для этого
+		введите команду:\\
+		\verb|docker exec -ti [имя контейнера] cqlsh|
+	\item Для остановки и перезапуска контейнера используйте:\\
+		\verb|docker stop [имя контейнера]|\\
+		\verb|docker start [имя контейнера]|
+	\item Для удаления контейнера используйте:\\
+		\verb|docker rm [имя контейнера]|
+\end{enumerate}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-13 13-40-52}
+	\caption{Запуск Docker контейнера}
+	\label{fig:docker}
+\end{image}
+
+\section{Простые команды cqlsh}
+\subsection{Справка}
+
+Для получения справки по cqlsh введите \verb|HELP| или \verb|?;|
+будут выведены все существующие команды (рис.~\ref{fig:help}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-13 13-42-13}
+	\caption{Ввод комнды HELP}
+	\label{fig:help}
+\end{image}
+
+\subsection{Описание окружения в cqlsh}
+
+Если вы пользуетесь двоичным дистрибутивом, то после подключения
+к экземпляру Test Cluster создается пустое пространство ключей, т. е. база
+данных Cassandra. С этой базой можно экспериментировать.\par
+Чтобы узнать о текущем кластере, в котором вы работаете, введите:\\
+\verb|cqlsh> DESCRIBE CLUSTER;|
+Чтобы узнать, какие пространства ключей имеются в кластере, наберите:\\
+\verb|cqlsh> DESCRIBE KEYSPACES;|
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-13 13-56-09}
+	\caption{Окружения в cqlsh}
+	\label{fig:keyspaces}
+\end{image}
+
+\subsection{Создание пространства ключей и таблицы в cqlsh}
+
+Пространство ключей в Cassandra напоминает реляционную базу данных. В
+нем определяется одна или несколько таблиц, или "<семейств столбцов"> Если
+запустить cqlsh, не указав пространство ключей, то будет напечатано
+приглашение \texttt{cqlsh>}, в котором имя пространства ключей отсутствует.\par
+Создадим свое пространство ключей, чтобы было куда записывать данные.
+\begin{verbatim}
+CREATE KEYSPACE my_keyspace WITH replication = {
+	'class': 'SimpleStrategy'
+	, 'replication_factor': 1
+	};
+\end{verbatim}
+
+Создав пространство ключей, мы можем переключиться на него:
+\begin{verbatim}
+cqlsh> USE my_keyspace;
+cqlsh:my_keyspace>
+\end{verbatim}
+
+Приглашение изменилось --- теперь в него входит имя пространства ключей.\par
+Имея пространство ключей, мы можем создать в нем таблицу. В cqlsh для
+этого служит такая команда:
+
+\begin{verbatim}
+cqlsh:my_keyspace> CREATE TABLE user (
+	first_name text
+	, last_name text
+	, PRIМARY КЕУ (first_name)
+	);
+\end{verbatim}
+
+В результате в текущем пространстве ключей создается таблица "<user"> с
+двумя столбцами для хранения имени и фамилии, оба типа text. Типы text и
+varchar -- синонимы и применяются для хранения строк. Мы сказали, что
+столбец \textit{first\_name} будет первичным ключом, а для всех остальных
+параметров таблицы оставили значения по умолчанию.\par
+С помощью команды \texttt{DESCRIBE TABLES} можно получить описание только
+что созданной таблицы (рис.~\ref{fig::create_table}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-15 11-57-18}
+	\caption{Создание таблицы}
+	\label{fig::create_table}
+\end{image}
+
+\subsection{Запись и чтение данных в cqlsh}
+Для записи значения служит команда INSERT:
+
+\begin{verbatim}
+cqlsh:my_keyspace> INSERT INTO user (first_name, last_name) VALUES
+('Bill', 'Nguyen');
+\end{verbatim}
+
+Прочитаем их командой SELECT:
+
+\begin{verbatim}
+cqlsh:my_keyspace> SELECT * FROM user WHERE first_name='Bill';
+\end{verbatim}
+
+Команда DELETE позволяет удалить столбец. Ниже из строки с ключом Bill
+удаляется столбец \textit{last\_name}:
+
+\begin{verbatim}
+cqlsh:my_keyspace> DELETE last_name FROM user WHERE first_name='Bill';
+\end{verbatim}
+
+Убедимся, что столбец действительно удален:
+
+\begin{verbatim}
+cqlsh:my_keyspace> SELECT * FROM user WHERE first_name='Bill';
+\end{verbatim}
+
+Теперь почистим за собой, удалив всю строку. Команда та же самая, только
+имя столбца не указывается:
+
+\begin{verbatim}
+cqlsh:my_keyspace> DELETE FROM user WHERE first_name='Bill';
+\end{verbatim}
+
+Убедимся, что строка удалена:
+
+\begin{verbatim}
+cqlsh:my_keyspace> SELECT * FROM user WHERE first_name='Bill';
+\end{verbatim}
+
+Можно удалить из таблицы все данные командой TRUNCATE или вообще
+удалить схему таблицы командой DROP TABLE:
+
+\begin{verbatim}
+cqlsh:my_keyspace> TRUNCATE user;
+cqlsh:my_keyspace> DROP TABLE user;
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-15 12-09-01}
+	\caption{Запись и чтение данных}
+	\label{fig::fill}
+\end{image}
+
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+В результате практической работы была изучена работа
+с СУБД Apache Cassandra.\par
+Научились запускать образ СУБД в контейнере.
+Изучили, что такаое пространство ключей.
+Узанали, как создавать таблицы, как их заполнять, получать из них данный.
+А также удалять данный из таблиц.
+
