@@ -1,0 +1,77 @@
+\ProvidesPackage{style}
+
+\usepackage{cmap} % for pdfLaTeX
+\usepackage[T1,T2A]{fontenc} % correct encoding for pdfLaTeX
+\usepackage[utf8]{inputenc} % correct encoding source file
+\usepackage[english,russian]{babel} % correct language
+\usepackage[labelsep=period]{caption}
+
+
+\frenchspacing
+\pagestyle{plain}
+
+\usepackage[left=3cm, right=1.5cm, vmargin=2cm]{geometry}
+\linespread{1.5} % line spacing 1.5
+\usepackage{indentfirst} % indent first paragraph
+\setlength{\parindent}{1.25cm}
+\sloppy
+
+
+% for graphics
+\usepackage{graphicx}
+
+\usepackage{amsmath}
+\usepackage{listings}
+\lstset{
+	basicstyle=\small,
+	frame=single,
+	captionpos=t,
+	tabsize=4,
+	breaklines,
+	columns=fullflexible,
+    flexiblecolumns,
+    keepspaces=true,
+	showspaces=flase,
+	showstringspaces=false,
+	showtabs=false,
+    extendedchars=\true
+}
+
+\usepackage{longtable}
+
+\usepackage{pdfpages}
+
+\usepackage{hyperref}
+\hypersetup{
+    pdfborder = {0 0 0}
+}
+
+\usepackage{enumitem}
+\setlist{nosep}
+\setlist[enumerate]{label*=\arabic*.}
+\setlist[description]{style=nextline}
+
+% for headers and footers
+\usepackage{fancyhdr}
+
+% for non-end-to-end numbering
+%\usepackage{chngcntr}
+%\counterwithin{figure}{section}
+%\counterwithin{table}{section}
+
+\clubpenalty=10000
+\widowpenalty=10000
+
+\providecommand{\No}{\textnumero}
+
+%\setlength{\abovecaptionskip}{3pt}
+%\setlength{\belowcaptionskip}{3pt}
+
+\newenvironment{image}{
+	\begin{figure}[h!tp]
+	\centering
+}{
+	\end{figure}
+}
+\newcommand\includegrph[2][width=1\textwidth]{\includegraphics[#1]{#2}}
+

@@ -1,0 +1,10 @@
+*.aux
+*.fdb_latexmk
+*.fls
+*.toc
+*.out
+*.pdf
+*.log
+clr
+Makefile
+*.pptx
