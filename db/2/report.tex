@@ -1,0 +1,196 @@
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Распределенные базы данных можно широко классифицировать на
+однородные и гетерогенные среды распределенных баз данных, каждая из
+которых имеет дополнительные подразделения.
+
+Свойства однородных распределенных баз данных:
+\begin{itemize}
+	\item На сайтах используется очень похожее программное обеспечение.
+	\item Сайты используют идентичные СУБД или СУБД одного и того же
+		производителя.
+	\item Каждый сайт знает обо всех других сайтах и взаимодействует с
+		другими сайтами для обработки пользовательских запросов.
+	\item Доступ к базе данных осуществляется через единый интерфейс, как
+		если бы это была одна база данных.
+\end{itemize}
+
+Типы однородной распределенной базы данных:
+\begin{itemize}
+	\item Автономный — каждая база данных независима и функционирует
+		самостоятельно. Они интегрированы управляющим приложением и
+		используют передачу сообщений для обмена обновлениями данных.
+	\item Неавтономный — данные распределяются по однородным узлам, а
+		центральная или главная СУБД координирует обновления данных по
+		сайтам.
+\end{itemize}
+
+Свойства гетерогенных распределенных баз данных:
+\begin{itemize}
+	\item Система может состоять из множества СУБД, таких как реляционная,
+		сетевая, иерархическая или объектно-ориентированная.
+	\item Обработка запросов является сложной из-за разнородных схем.
+	\item Обработка транзакций является сложной из-за различий в
+		программном обеспечении.
+	\item Сайт может не знать о других сайтах, поэтому сотрудничество при
+		обработке пользовательских запросов ограничено.
+\end{itemize}
+
+Типы гетерогенных распределенных баз данных:
+\begin{itemize}
+	\item Федеративные — гетерогенные системы баз данных независимы по
+		своей природе и объединены вместе, так что они функционируют как
+		единая система баз данных.
+	\item Без федерации — в системах баз данных используется центральный
+		координационный модуль, через который осуществляется доступ к
+		базам данных.
+\end{itemize}
+
+\textbf{Цель работы} --- научиться создавать кластеры в Apache Cassandra.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Создание Docker контейнеров}
+
+Запускаем контейнер с первым узлом кассандры, где
+\texttt{CASSANDRA\_CLUSTER\_NAME} можно задать своё, например,
+инициалы студента:
+
+\begin{lstlisting}[language=bash]
+docker run --name cas1 -p 9042:9042 -e
+CASSANDRA\_CLUSTER\_NAME=ArbonCluster -e
+CASSANDRA\_ENDPOINT\_SNITCH=GossipingPropertyFileSnitch -e
+CASSANDRA\_DC=datacenter1 -d cassandra
+\end{lstlisting}
+
+Присоединяем к нему следующий узел, где
+\texttt{CASSANDRA\_CLUSTER\_NAME} задаём такой же, как в первом узле:
+
+\begin{lstlisting}[language=bash]
+docker run --name cas2
+	-e CASSANDRA\_SEEDS=
+		"\$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' cas1)"
+	-e CASSANDRA\_CLUSTER\_NAME=ArbonCluster
+	-e CASSANDRA\_ENDPOINT\_SNITCH=GossipingPropertyFileSnitch
+	-e CASSANDRA\_DC=datacenter1
+	-d cassandra:latest
+\end{lstlisting}
+
+(docker
+\texttt{inspect \-\-format='\{\{ .NetworkSettings.IPAddress \}\}' cas1}
+)~--- это вложенный скрипт при помощи которого мы можем получить
+IP-адрес первого узла, тем самым связывая два узла в данном пункте.\par
+Присоединяем к первому узлу следующий узел, где
+\texttt{CASSANDRA\_CLUSTER\_NAME} задаём такой же, как в первом узле,
+но меняем значение \texttt{CASSANDRA\_DC=datacenter1} на \texttt{datacenter2},
+тем самым создаём новый узел в «как бы удалённом» датацентре:
+
+\begin{lstlisting}[language=bash]
+docker run --name cas3
+	-e CASSANDRA\_SEEDS=
+		"\$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' cas1)"
+	-e CASSANDRA\_CLUSTER\_NAME=ArbonCluster
+	-e CASSANDRA\_ENDPOINT\_SNITCH=GossipingPropertyFileSnitch
+	-e CASSANDRA\_DC=datacenter2
+	-d cassandra:latest
+\end{lstlisting}
+
+Теперь у нас есть целый кластер кассандры, в котором все данные
+синхронизированы, таким образом все модификации с бд, которые
+будут проводиться будут применены ко всему кластеру и неважно с
+какого узла эти самые изменения произошли (рис.~\ref{fig:docker}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 20-11-10}
+	\caption{Создание докер контейнеров с Apache Cassandra}
+	\label{fig:docker}
+\end{image}
+
+Для того чтобы удостовериться, что весь кластер работает правильно
+необходимо выполнить команду \texttt{docker exec -ti cas1 nodetool status}
+(рис.~\ref{fig:status}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 20-12-53}
+	\caption{Вывод статуса узлов}
+	\label{fig:status}
+\end{image}
+
+\section{Создание своей БД}
+
+Теперь необходимо создать свою схему бд (в кассандре это
+пространство ключей) для этого необходимо перейти в утилиту \texttt{cqlsh} 
+при помощи команды \texttt{docker exec -ti cas1 cqlsh} и выполнить скрипт,
+где название кейспейса можно придумать самому (желательно номер
+студенческого или другой идентификатор).
+
+\begin{lstlisting}[language=bash]
+CREATE KEYSPACE arbon1874 WITH replication = {
+	'class' : 'NetworkTopologyStrategy',
+	'datacenter1' : 1,
+	'datacenter2' : 1
+	};
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 21-27-55}
+	\caption{Создание пространства ключей}
+	\label{fig:keyspace}
+\end{image}
+
+Структура создаваемой базы данный показана на рисунке~\ref{fig:eer}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-20 14-24-05}
+	\caption{Создание пространства ключей}
+	\label{fig:eer}
+\end{image}
+
+Далее создадим таблицы (рис. \ref{fig:first}~-~\ref{fig:last}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 21-26-14}
+	\caption{Таблица factory}
+	\label{fig:first}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 21-25-58}
+	\caption{Таблица material}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 21-26-22}
+	\caption{Таблица equipment}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-02-18 21-26-44}
+	\caption{Таблица type\_equipment}
+	\label{fig:last}
+\end{image}
+
+\clearpage
+
+Теперь проверим, что на всех узлах есть созданные таблицы
+(рис.~\ref{fig:check}).
+
+\begin{image}
+	\includegrph{check.png}
+	\caption{Содержимое пространства ключей на разных узлах}
+	\label{fig:check}
+\end{image}
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+В результате практической работы была изучена работа
+с распределенной бд, используя Apache Cassandra.\par
+Были созданы докер контейнеры прдеставляющие разные узлы.
+И базе данных созданы таблицы.
+
