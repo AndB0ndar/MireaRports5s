@@ -1,0 +1,9 @@
+#!/bin/sh
+
+suffix='aux fdb_latexmk fls toc out log'
+
+for suf in $suffix
+do
+	rm $(find . -regex ".*$suf")
+done
+	

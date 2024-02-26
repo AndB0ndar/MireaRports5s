@@ -1,0 +1,36 @@
+\documentclass[14pt,a4paper,oneside]{extreport}
+
+\usepackage{../res/style}
+\graphicspath{{./course/img}}
+
+\author{Bondar Andrei Renatovich}
+\date{\today}
+
+\includeonly{
+	./course/analysis,
+	./course/intro,
+}
+
+\begin{document}
+\renewcommand{\figurename}{Рисунок}
+\renewcommand{\contentsname}{СОДЕРЖАНИЕ}
+\renewcommand{\bibname}{СПИСОК ИСПОЛЬЗУЕМОЙ ЛИТЕРАТУРЫ}
+
+%\includepdf[pages=-]{./res/title.pdf}
+
+\include{./course/annotation}
+
+\tableofcontents
+
+\include{./course/intro}
+\include{./course/analysis}
+\include{./course/realization}
+\include{./course/conclusion}
+\include{./course/literature}
+
+\appendix
+
+\include{./course/code}
+
+\end{document}
+
