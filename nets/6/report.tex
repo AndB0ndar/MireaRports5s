@@ -2,392 +2,409 @@ https://itexamanswers.net/7-4-2-lab-implement-dhcpv4-answers.html
 
 \section{Выполнение практической работы}
 
-\section{Настройка основных параметров коммутатора}
+\section{Создание сети и настройка основных параметров устройства}
+
+\subsection{Создание схемы адресации}
+
+\begin{table}[htbp]
+	\centering
+	\caption{Network Device Information}
+	\label{tab:network_devices}
+	\begin{tabular}{|l|l|l|l|l|}
+		\hline
+		\textbf{Device} & \textbf{Interface} & \textbf{IP Address}
+			& \textbf{Subnet Mask} & \textbf{Default Gateway} \\ \hline
+		R1 & G0/0/0 & 10.0.0.1 & 255.255.255.252 & N/A \\ \hline
+		R1 & G0/0/1 & N/A & N/A & N/A \\ \hline
+		R1 & G0/0/1.100 & 192.168.1.1 & 255.255.255.192 & N/A \\ \hline
+		R1 & G0/0/1.203 & 192.168.1.65 & 255.255.255.224 & N/A \\ \hline
+		R1 & G0/0/1.1000 & N/A & N/A & N/A \\ \hline
+		R2 & G0/0/0 & 10.0.0.2 & 255.255.255.252 & N/A \\ \hline
+		R2 & G0/0/1 & 192.168.1.97 & 255.255.255.240 & N/A \\ \hline
+		S1 & VLAN 203 & 192.168.1.66 & 255.255.255.224 & 192.168.1.65 \\ \hline
+		S2 & VLAN 1 & 192.168.1.98 & 255.255.255.240 & 192.168.1.97 \\ \hline
+		PC & NIC & DHCP & DHCP & DHCP \\ \hline
+		PC & NIC & DHCP & DHCP & DHCP \\ \hline
+	\end{tabular}
+\end{table}
 
 \subsection{Настройте базовые параметры каждого коммутатора}
 
 \begin{verbatim}
-enable
-config t
+hostname R1_BONDAR
 no ip domain lookup
-hostname S1\_BONDAR
-service password-encryption
-banner motd # You must be authorizeded! #
 enable secret class
 line console 0
 password cisco
 login
-line vty 0 15
+line vty 0 4
 password cisco
 login
-logging synchronous
-interface range f0/5, f0/7-24, g0/1-2  // S1
-interface range f0/5-17, f0/19-24, g0/1-2  // S2
-interface range f0/5-17, f0/19-24, g0/1-2  // S3
-shutdown
-vlan 99
-name Management
-vlan 13
-name Staff
-interface f0/6  // S1
-interface f0/18  // S2
-interface f0/18  // S3
-switchport mode access
-switchport access vlan 13
+service password-encryption
+banner motd # You must be authorizeded! #
+copy running-config startup-config
+clock set 21:15:00 12 Mar 2024
+\end{verbatim}
+
+\subsection{Настройка маршрутизации между сетями VLAN
+	на маршрутизаторе R1\_ФАМИЛИЯ}
+
+Активируйте интерфейс G0/0/1 на маршрутизаторе.
+
+\begin{verbatim}
+interface g0/0/1
 no shutdown
-interface vlan 99
-ip address 192.168.99.11 255.255.255.0
+exit
+\end{verbatim}
+
+Настройте подинтерфейсы для каждой VLAN
+в соответствии с требованиями таблицы IPадресации.
+Все субинтерфейсы используют инкапсуляцию 802.1Q
+и назначаются первый полезный адрес из вычисленного пула IP-адресов.
+Убедитесь, что подинтерфейсу для native VLAN не назначен IP-адрес.
+Включите описание для каждого подинтерфейса.
+
+\begin{verbatim}
+interface g0/0/1.100
+description Client
+encapsulation dot1q 100
+ip address 192.168.1.1 255.255.255.192
+interface g0/0/1.203
+encapsulation dot1q 203
+description Management
+ip address 192.168.1.65 255.255.255.224
+interface g0/0/1.1000
+encapsulation dot1q 1000 native
+description Native
+\end{verbatim}
+
+Убедитесь, что вспомогательные интерфейсы работают.
+
+\begin{verbatim}
+show ip interface brief
+\end{verbatim}
+
+\subsection{Настройте G0/1 на R2, затем G0/0/0
+	и статическую маршрутизацию для обоих маршрутизаторов}
+
+Настройте G0/0/1 на R2 с первым IP-адресом подсети C, рассчитанным ранее.
+
+\begin{verbatim}
+interface g0/0/1
+ip address 192.168.1.97 255.255.255.240
 no shutdown
-end
+exit
+\end{verbatim}
+
+Настройте интерфейс G0/0/0 для каждого маршрутизатора
+на основе приведенной выше таблицы IP-адресации.
+
+\begin{verbatim}
+interface g0/0/0
+ip address 10.0.0.1 255.255.255.252  // R1
+ip address 10.0.0.2 255.255.255.252  // R2
+no shutdown
+\end{verbatim}
+
+Настройте маршрут по умолчанию на каждом маршрутизаторе,
+указываемом на IP-адрес G0/0/0 на другом маршрутизаторе.
+
+\begin{verbatim}
+ip route 0.0.0.0 0.0.0.0 10.0.0.2  // R1
+ip route 0.0.0.0 0.0.0.0 10.0.0.1  // R2
+\end{verbatim}
+
+Убедитесь, что статическая маршрутизация работает
+с помощью отправки эхо-запроса до адреса G0/0/1 R2 от R1\_ФАМИЛИЯ.
+
+\begin{verbatim}
+ping 192.168.1.97
+\end{verbatim}
+
+Сохраните текущую конфигурацию в файл загрузочной конфигурации
+
+\begin{verbatim}
 copy running-config startup-config
 \end{verbatim}
 
-\section{Настройка протокола PAgP}
-\subsection{Настройте PAgP на S1\_ФАМИЛИЯ и S3}
+\subsection{Настройте базовые параметры каждого коммутатора}
 
 \begin{verbatim}
-config t
-interface range f0/3-4
-channel-group 1 mode desirable  // S1
-channel-group 1 mode auto  // S3
+hostname S1
+no ip domain-lookup
+enable secret class
+line console 0
+password cisco
+login
+line vty 0 4
+password cisco
+login
+service password-encryption
+banner motd # You must be authorizeded! #
+exit
+copy running-config startup-config
+clock set 21:32:00 13 Mar 2019
+\end{verbatim}
+
+\subsection{Создайте сети VLAN на коммутаторе S1}
+
+Создайте необходимые VLAN на коммутаторе 1
+и присвойте им имена из приведенной выше таблицы.
+
+\begin{verbatim}
+vlan 100
+name Clients
+vlan 200
+name Management
+vlan 999
+name Parking\_Lot
+vlan 1000
+name Native
+exit
+\end{verbatim}
+
+Настройте и активируйте интерфейс управления на S1 (VLAN X+200),
+используя второй IP-адрес из подсети, рассчитанный ранее.
+Кроме того установите шлюз по умолчанию на S1.
+
+\begin{verbatim}
+interface vlan 203
+ip address 192.168.1.66 255.255.255.224
 no shutdown
+exit
+ip default-gateway 192.168.1.65
 \end{verbatim}
 
-\subsection{Проверьте конфигурации на портах}
+Настройте и активируйте интерфейс управления на S2 (VLAN 1),
+используя второй IP-адрес из подсети, рассчитанный ранее.
+Кроме того, установите шлюз по умолчанию на S2
 
 \begin{verbatim}
-show run interface f0/3
-show interfaces f0/3 switchport
-\end{verbatim}
-
-\subsection{Убедитесь, что порты объединены}
-
-\begin{verbatim}
-show etherchannel summary
-\end{verbatim}
-
-\textbf{Что означают флаги «SU» и «P» в сводных данных по Ethernet?}\\
-Флаг P указывает, что порты объединены в порт-канал.\\
-Флаг S указывает, что порт-канал является EtherChannel уровня 2.\\
-Флаг U указывает, что EtherChannel используется.\\
-
-\subsection{Настройте транковые порты}
-
-\textbf{S1 S3}
-
-\begin{verbatim}
-config t
-interface port-channel 1
-switchport mode trunk
-switchport trunk native vlan 99
-\end{verbatim}
-
-\subsection{Убедитесь в том, что порты настроены в качестве транковых}
-
-Выполните команды \verb|show running-startup| идентификатор-интерфейса
-на S1\_ФАМИЛИЯ и S3.
-Какие команды включены в список для интерфейсов F0/3 и F0/4
-на обоих коммутаторах?
-
-\begin{verbatim}
-switchport trunk native vlan 99
-switchport mode trunk
-\end{verbatim}
-
-Сравните результаты с текущей конфигурацией для интерфейса Po1.
-Запишите наблюдения.
-
-Команды, относящиеся к конфигурации таранков, одинаковы.
-Когда команды таранков были применены к EtherChannel,
-команды также повлияли на отдельные ссылки в пакете.
-
-\begin{verbatim}
-!
-interface Port-channel1
- switchport trunk native vlan 99
- switchport mode trunk
-!
-interface FastEthernet0/1
-!
-interface FastEthernet0/2
-!
-interface FastEthernet0/3
- switchport trunk native vlan 99
- switchport mode trunk
- channel-group 1 mode desirable
-!
-\end{verbatim}
-
-Выполните команды \verb|show interfaces trunk| и \verb|show spanning-tree|
-на S1\_ФАМИЛИЯ и S3.
-Какой транковый порт включен в список?
-Какая используется сеть native VLAN?
-Какой вывод можно сделать на основе выходных данных?
-
-Указанный таранковый порт - Po1.
-Собственная VLAN - 99.
-После объединения ссылок в некоторых командах отображается только
-агрегированный интерфейс.
-
-Какие значения стоимости и приоритета порта
-для агрегированного канала отображены
-в выходных данных команды show spanning-tree?
-
-Стоимость порта для Po1 равна 12, а приоритет порта равен 128.
-
-\begin{verbatim}
-S1_BONDAR#show interfaces trunk
-Port        Mode         Encapsulation  Status        Native vlan
-Po1         on           802.1q         trunking      99
-Port        Vlans allowed on trunk
-Po1         1-1005
-Port        Vlans allowed and active in management domain
-Po1         1,13,99
-Port        Vlans in spanning tree forwarding state and not pruned
-Po1         1,13,99
-S1_BONDAR#
-\end{verbatim}
-
-\begin{verbatim}
-S1_BONDAR#show spanning-tree 
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32769
-             Address     0002.176D.07E9
-             Cost        12
-             Port        27(Port-channel1)
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)
-             Address     0060.7031.8697
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg FWD 19        128.2    P2p
-Po1              Root FWD 12        128.27   Shr
-VLAN0013
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32781
-             Address     0002.176D.07E9
-             Cost        12
-             Port        27(Port-channel1)
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-  Bridge ID  Priority    32781  (priority 32768 sys-id-ext 13)
-             Address     0060.7031.8697
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/6            Desg FWD 19        128.6    P2p
-Po1              Root FWD 12        128.27   Shr
-VLAN0099
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32867
-             Address     0002.176D.07E9
-             Cost        12
-             Port        27(Port-channel1)
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-  Bridge ID  Priority    32867  (priority 32768 sys-id-ext 99)
-             Address     0060.7031.8697
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Po1              Root FWD 12        128.27   Shr
-S1_BONDAR#
-\end{verbatim}
-
-\begin{verbatim}
-S3#show spanning-tree 
-VLAN0001
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32769
-             Address     0002.176D.07E9
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)
-             Address     0002.176D.07E9
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/1            Desg FWD 19        128.1    P2p
-Fa0/2            Desg FWD 19        128.2    P2p
-Po1              Desg FWD 12        128.27   Shr
-VLAN0013
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32781
-             Address     0002.176D.07E9
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-
-  Bridge ID  Priority    32781  (priority 32768 sys-id-ext 13)
-             Address     0002.176D.07E9
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Fa0/18           Desg FWD 19        128.18   P2p
-Po1              Desg FWD 12        128.27   Shr
-VLAN0099
-  Spanning tree enabled protocol ieee
-  Root ID    Priority    32867
-             Address     0002.176D.07E9
-             This bridge is the root
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-  Bridge ID  Priority    32867  (priority 32768 sys-id-ext 99)
-             Address     0002.176D.07E9
-             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
-             Aging Time  20
-Interface        Role Sts Cost      Prio.Nbr Type
----------------- ---- --- --------- -------- --------------------------------
-Po1              Desg FWD 12        128.27   Shr
-S3#
-\end{verbatim}
-
-\section{Настройка протокола LACP}
-
-Протокол LACP является открытым протоколом агрегирования каналов,
-разработанным на базе стандарта IEEE.
-В части 3 необходимо выполнить настройку канала между S1\_ФАМИЛИЯ и S2
-и канала между S2 и S3 с помощью протокола LACP.
-Кроме того, отдельные каналы необходимо настроить в качестве транковых
-и указать native vlan, прежде чем они будут объединены в каналы EtherChannel.
-
-\subsection{Настройте LACP между S1\_ФАМИЛИЯ и S2}
-
-Настройте канал между S2 и S3 как Po3,
-используя LACP как протокол агрегирования каналов.
-Канал на S1\_ФАМЛИЛИЯ должен быть в режиме active,
-а канал на S2 – в режиме passive.
-
-\begin{verbatim}
-interface range f0/1-2
-switchport mode trunk
-switchport trunk native vlan 99
-channel-group 2 mode active  // S1
-channel-group 2 mode passive  // S2
+interface vlan 1
+ip address 192.168.1.98 255.255.255.240
 no shutdown
+exit
+ip default-gateway 192.168.1.97
 \end{verbatim}
 
-\subsection{Убедитесь, что порты объединены}
-
-Какой протокол использует Po2 для агрегирования каналов?
-Какие порты агрегируются для образования Po2?
-Запишите команду, используемую для проверки.
-
-Po2 использует LACP. F0/1 и F0/2 агрегируются с образованием Po2.
+Назначьте все неиспользуемые порты S1 VLAN Parking\_Lot,
+настройте их для статического режима доступа
+и административно деактивируйте их.
+На S2 административно деактивируйте все неиспользуемые порты.
 
 \begin{verbatim}
-S1_BONDAR#show etherchannel summary
-Flags:  D - down        P - in port-channel
-        I - stand-alone s - suspended
-        H - Hot-standby (LACP only)
-        R - Layer3      S - Layer2
-        U - in use      f - failed to allocate aggregator
-        u - unsuitable for bundling
-        w - waiting to be aggregated
-        d - default port
-Number of channel-groups in use: 2
-Number of aggregators:           2
-Group  Port-channel  Protocol    Ports
-------+-------------+-----------+----------------------------------------------
-1      Po1(SU)           PAgP   Fa0/3(P) Fa0/4(D) 
-2      Po2(SU)           LACP   Fa0/1(P) Fa0/2(P) 
-S1_BONDAR#
+interface range f0/1 - 4, f0/7 - 24, g0/1 - 2  // S1
+interface range f0/1 - 4, f0/6 - 17, f0/19 - 24, g0/1 - 2  // S2
+switchport mode access
+switchport access vlan 999  // S1
+shutdown
+exit
 \end{verbatim}
 
+\subsection{Назначьте сети VLAN соответствующим интерфейсам коммутатора}
+
+Назначьте используемые порты соответствующей VLAN
+(указанной в таблице VLAN выше)
+и настройте их для режима статического доступа.
+
 \begin{verbatim}
-S2#show etherchannel summary
-Flags:  D - down        P - in port-channel
-        I - stand-alone s - suspended
-        H - Hot-standby (LACP only)
-        R - Layer3      S - Layer2
-        U - in use      f - failed to allocate aggregator
-        u - unsuitable for bundling
-        w - waiting to be aggregated
-        d - default port
-Number of channel-groups in use: 1
-Number of aggregators:           1
-Group  Port-channel  Protocol    Ports
-------+-------------+-----------+----------------------------------------------
-2      Po2(SU)           LACP   Fa0/1(P) Fa0/2(P) 
-S2#
+// S1
+interface f0/6
+switchport mode access
+switchport access vlan 100
 \end{verbatim}
 
-\subsection{Настройте LACP между S2 и S3}
 
-Аналогично настройте канал между S2 и S3 как Po3,
-используя LACP как протокол агрегирования каналов.
+Убедитесь, что VLAN назначены на правильные интерфейсы.
 
 \begin{verbatim}
-interface range f0/3-4  // S2
-interface range f0/1-2  // S3
+// S1
+show vlan brief
+\end{verbatim}
+
+\textbf{Почему интерфейс F0/5 указан в VLAN 1?}\\
+Порт 5 находится в VLAN по умолчанию и не был настроен как магистраль 802.1Q.
+
+\subsection{Вручную настройте интерфейс S1 F0/5 в качестве транка 802.1Q}
+
+Измените режим порта коммутатора,
+чтобы принудительно создать магистральный канал.
+
+\begin{verbatim}
+interface f0/5
 switchport mode trunk
-switchport trunk native vlan 99
-channel-group 3 mode active  // S2
-channel-group 3 mode passive  // S3
-no shutdown
 \end{verbatim}
 
-b. Убедитесь в том, что канал EtherChannel образован.
+В рамках конфигурации транкового канала установите
+для native VLAN значение 1000.
 
 \begin{verbatim}
-S2#show etherchannel summary
-Flags:  D - down        P - in port-channel
-        I - stand-alone s - suspended
-        H - Hot-standby (LACP only)
-        R - Layer3      S - Layer2
-        U - in use      f - failed to allocate aggregator
-        u - unsuitable for bundling
-        w - waiting to be aggregated
-        d - default port
-Number of channel-groups in use: 2
-Number of aggregators:           2
-
-Group  Port-channel  Protocol    Ports
-------+-------------+-----------+----------------------------------------------
-
-2      Po2(SU)           LACP   Fa0/1(P) Fa0/2(P) 
-3      Po3(SU)           LACP   Fa0/3(P) Fa0/4(P) 
-S2#
+switchport trunk native vlan 1000
 \end{verbatim}
+
+В качестве другой части конфигурации магистрали укажите, что VLAN 100, X+200 и 1000 могут проходить по транковому каналу.
 
 \begin{verbatim}
-S3#show etherchannel summary
-Flags:  D - down        P - in port-channel
-        I - stand-alone s - suspended
-        H - Hot-standby (LACP only)
-        R - Layer3      S - Layer2
-        U - in use      f - failed to allocate aggregator
-        u - unsuitable for bundling
-        w - waiting to be aggregated
-        d - default port
-Number of channel-groups in use: 2
-Number of aggregators:           2
-Group  Port-channel  Protocol    Ports
-------+-------------+-----------+----------------------------------------------
-1      Po1(SU)           PAgP   Fa0/3(P) Fa0/4(D) 
-3      Po3(SU)           LACP   Fa0/1(P) Fa0/2(P) 
-S3#
+switchport trunk allowed vlan 100,203,1000
 \end{verbatim}
 
-\subsection{Проверьте наличие сквозного соединения}
+Сохраните текущую конфигурацию в файл загрузочной конфигурации.
 
-Убедитесь в том, что все устройства могут передавать друг другу эхо-запросы
-в пределах одной сети VLAN.
-Если нет, устраните неполадки,
-чтобы установить связь между конечными устройствами.
+\begin{verbatim}
+copy running-config startup-config
+\end{verbatim}
 
-192.168.99.11
-192.168.99.12
-192.168.99.13
+Проверьте состояние транкового канала.
 
-192.168.13.1
-192.168.13.2
-192.168.13.3
+\begin{verbatim}
+show interfaces trunk
+\end{verbatim}
 
-Да, между компьютерами. Да, между коммутаторами.
-Между компьютером и коммутатором не пингуется.
+\textbf{Какой IP-адрес был бы у ПК,
+если бы он был подключен к сети с помощью DHCP?}\\
+Они будут самонастраиваться с помощью автоматического
+частного IP-адреса (APIPA) в диапазоне 169.254.x.x.
+
+
+\section{Настройка и проверка двух серверов DHCPv4 на R1\_ФАМИЛИЯ}
+
+\subsection{Настройте R1\_ФАМИЛИЯ с пулами DHCPv4
+	для двух поддерживаемых подсетей}
+
+\begin{verbatim}
+ip dhcp excluded-address 192.168.1.1 192.168.1.5
+ip dhcp pool R1_Client_LAN
+network 192.168.1.0 255.255.255.192
+domain-name ccna-lab.com
+default-router 192.168.1.1
+lease 2 12 30
+
+ip dhcp excluded-address 192.168.1.97 192.168.1.101
+ip dhcp pool R2_Client_LAN
+network 192.168.1.96 255.255.255.240
+default-router 192.168.1.97
+domain-name ccna-lab.com
+lease 2 12 30
+\end{verbatim}
+
+\subsection{Сохраните конфигурацию}
+Сохраните текущую конфигурацию в файл загрузочной конфигурации.
+Закройте окно настройки.
+
+\begin{verbatim}
+copy running-config startup-config
+\end{verbatim}
+
+\subsection{Проверка конфигурации сервера DHCPv4}
+
+Чтобы просмотреть сведения о пуле,
+выполните команду \texttt{show ip dhcp pool}.
+
+\begin{verbatim}
+R1_BONDAR#show ip dhcp pool 
+
+Pool R1_Client_LAN :
+ Utilization mark (high/low)    : 100 / 0
+ Subnet size (first/next)       : 0 / 0 
+ Total addresses                : 62
+ Leased addresses               : 0
+ Excluded addresses             : 2
+ Pending event                  : none
+
+ 1 subnet is currently in the pool
+ Current index        IP address range                    Leased/Excluded/Total
+ 192.168.1.1          192.168.1.1      - 192.168.1.62      0    / 2     / 62
+
+Pool R2_Client_LAN :
+ Utilization mark (high/low)    : 100 / 0
+ Subnet size (first/next)       : 0 / 0 
+ Total addresses                : 14
+ Leased addresses               : 0
+ Excluded addresses             : 2
+ Pending event                  : none
+
+ 1 subnet is currently in the pool
+ Current index        IP address range                    Leased/Excluded/Total
+ 192.168.1.97         192.168.1.97     - 192.168.1.110     0    / 2     / 14
+R1_BONDAR#
+\end{verbatim}
+
+Выполните команду \texttt{show ip dhcp binding}
+для проверки установленных назначений адресов DHCP.
+
+\begin{verbatim}
+R1_BONDAR#show ip dhcp binding 
+IP address       Client-ID/              Lease expiration        Type
+                 Hardware address
+R1_BONDAR#
+\end{verbatim}
+
+Выполните команду \textbf{show ip dhcp server statistics}
+для проверки сообщений DHCP.
+
+\textbf{NOT WORK?}
+
+\subsection{Попытка получить IP-адрес от DHCP на PC-A}
+
+Из командной строки компьютера PC-A выполните команду ipconfig /all.
+
+После завершения процесса обновления выполните команду ipconfig для просмотра новой информации об IP-адресе.
+
+Проверьте подключение с помощью эхо-запроса
+на IP-адрес интерфейса R1\_ФАМИЛИЯ G0/0/1.
+
+\begin{verbatim}
+ping 192.168.1.1
+\end{verbatim}
+
+\subsection{Настройка и проверка DHCP-ретрансляции на R2}
+
+\subsection{\\Настройка R2 в качестве агента DHCP-ретрансляции
+	для локальной сети на G0/0/1}
+
+Настройте команду ip helper-address на G0/0/1,
+указав IP-адрес G0/0/0 R1\_ФАМИЛИЯ.
+
+\begin{verbatim}
+// R2
+interface g0/0/1
+ip helper-address 10.0.0.1
+\end{verbatim}
+
+Сохраните конфигурацию.
+
+\begin{verbatim}
+copy running-config startup-config
+\end{verbatim}
+
+\subsection{Попытка получить IP-адрес от DHCP на PC-B}
+
+Из командной строки компьютера PC-B выполните команду \texttt{ipconfig /all}.
+
+После завершения процесса обновления выполните команду\texttt{ipconfig} 
+для просмотра новой информации об IP-адресе.
+
+Проверьте подключение с помощью эхо-запроса
+на IP-адрес интерфейса R1\_ФАМИЛИЯ G0/0/1.
+
+\begin{verbatim}
+ping 192.168.1.1
+\end{verbatim}
+
+Выполните \texttt{show ip dhcp binding} для R1\_ФАМИЛИЯ =
+для проверки назначений адресов в DHCP.
+
+\begin{verbatim}
+R1_BONDAR# show ip dhcp binding 
+IP address       Client-ID/              Lease expiration        Type
+                 Hardware address
+192.168.1.6      0060.5C61.DA44           --                     Automatic
+192.168.1.102    00E0.B081.7204           --                     Automatic
+R1_BONDAR#
+\end{verbatim}
+
+Выполните команду \texttt{show ip dhcp server statistics}
+для проверки сообщений DHCP.
+
+\textbf{NOT WORK?}
 
