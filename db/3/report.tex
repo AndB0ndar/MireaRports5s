@@ -1,0 +1,381 @@
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Столбцы и таблицы поддерживают необязательный срок действия,
+называемый TTL (time-to-live); TTL не поддерживается для столбцов счетчиков.
+Значение TTL задается в секундах. Срок действия данных истекает, когда они
+превышают период TTL, после чего они помечаются меткой tombstone. Данные
+с истекшим сроком действия по-прежнему доступны для запросов на чтение в
+течение определенного периода. Обычные процессы сжатия данных и починки
+автоматически удаляют tombstones.\par
+В Cassandra удаленные данные не удаляются сразу с диска. Вместо этого
+Cassandra записывает специальное значение, известное как tombstone, чтобы
+указать, что данные были удалены.\par
+Назначение:\par
+Эти значения предотвращают возврат удаленных данных во время чтения
+и в конечном итоге позволяют удалить данные посредством сжатия.\par
+Tombstones являются частью реализации модели хранения данных (во
+время записи существующие данные не читаются).\par
+Tombstones --- это записи---  они проходят обычный путь записи,
+занимают место на диске и используют механизмы согласованности Cassandra.\par
+Если кластер управляется правильно, это гарантирует, что данные останутся
+удаленными, даже если узел не работает, когда выполняется удаление.\par
+Tombstones генерируются при помощи:
+
+\begin{itemize}
+	\item операции DELETE;
+	\item установки TTL;
+	\item вставки null значений;
+	\item вставки данных в части коллекций.
+\end{itemize}
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Утилита sstabledump и ее установка}
+
+Для начала необходимо скачать образ Cassandra и запустить контейнер.
+Далее нужно зайти в консоль контейнера.
+
+\begin{lstlisting}[language=bash]
+docker pull cassandra
+docker run -d –name cas cassandra
+docker exec -ti cas bash
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 12-24-42}
+	\caption{Создание образа Cassandra}
+	\label{fig:docker:cas}
+\end{image}
+
+Далее:
+\begin{itemize}
+	\item добавим репозиторий с инструментами Cassandra (echo …);
+	\item обновим зависимости;
+	\item скачаем необходимые пакеты для работы (curl, gnupg);
+	\item подпишем репозиторий для скачивания необходимого нам пакета;
+	\item обновим зависимости с целью поттягивания репозитория;
+	\item скачаем пакет cassandra-tools.
+\end{itemize}
+
+После этого его можно использовать.
+
+\begin{lstlisting}[language=bash]
+\$ echo "deb https://debian.cassandra.apache.org 40x main" | tee –a
+	/etc/apt/sources.list.d/cassandra.sources.list
+\$ apt update \&\& apt upgrade
+\$ apt install curl
+\$ apt-get install gnupg
+\$ curl https://downloads.apache.org/cassandra/KEYS | apt-key add -
+\$ apt-get update
+\$ apt-get install cassandra-tools
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 12-26-33}
+	\caption{Настрока контейнера}
+	\label{fig:docker:bash}
+\end{image}
+
+\section{Создание keyspace и таблиц}
+
+В данной практической работе будет использоваться keyspace "cycling"
+для того, чтобы продемонстрировать различные варианты tombstone. Будут
+использоваться следующие таблицы:
+
+\begin{itemize}
+	\item rand\_by\_year\_and\_cycling\_name
+	\item cyclist\_career\_teams
+	\item calendar
+\end{itemize}
+
+Для начала необходимо перейти в \texttt{cqlsh} консоль для создания keyspace,
+2 таблиц, и вставки записей в rank\_by\_year\_and\_cycling\_name. Вставка
+записей в cyclist\_career\_teams и calendar будет произведена
+позднее
+
+\begin{lstlisting}[language=bash]
+CREATE KEYSPACE cycling WITH replication =
+{'class': 'SimpleStrategy', 'replication\_factor': '1'} AND durable\_writes =
+true;
+
+CREATE TABLE cycling.rank\_by\_year\_and\_name (
+ race\_year int,
+ race\_name text,
+ rank int,
+ cyclist\_name text,
+ PRIMARY KEY ((race\_year, race\_name), rank)
+) WITH CLUSTERING ORDER BY (rank ASC);
+
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2015, 'Tour of Japan - Stage 4 - Minami > Shinshu', 'Benjamin PRADES', 1);
+
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2015, 'Tour of Japan - Stage 4 - Minami > Shinshu', 'Adam PHELAN', 2);
+
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2015, 'Tour of Japan - Stage 4 - Minami > Shinshu', 'Thomas
+
+LEBAS', 3);
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2015, 'Giro d''Italia - Stage 11 - Forli > Imola', 'Ilnur
+
+ZAKARIN', 1);
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2015, 'Giro d''Italia - Stage 11 - Forli > Imola', 'Carlos
+
+BETANCUR', 2);
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2014, '4th Tour of Beijing', 'Phillippe GILBERT', 1);
+
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2014, '4th Tour of Beijing', 'Daniel MARTIN', 2);
+
+INSERT INTO cycling.rank\_by\_year\_and\_name
+(race\_year, race\_name, cyclist\_name, rank)
+VALUES
+(2014, '4th Tour of Beijing', 'Johan Esteban CHAVES', 3);
+
+CREATE TABLE cycling.cyclist\_career\_teams (
+ id UUID PRIMARY KEY,
+ lastname text,
+ teams set<text>
+);
+CREATE TABLE cycling.calendar (
+ race\_id int,
+ race\_name text,
+ race\_start\_date timestamp,
+ race\_end\_date timestamp,
+ PRIMARY KEY (race\_id, race\_start\_date, race\_end\_date)
+);
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 12-26-33}
+	\caption{Заполнение базы данных}
+	\label{fig:cqlsh:create}
+\end{image}
+
+\section{Выгрузка в SSTable}
+
+После заполнения таблиц необходимо выполнить команду nodetool
+flush для созданного keyspace. Она необходима для выгрузки из кэша в
+SSTable-файлы, для дальнейшего использования.
+
+\begin{lstlisting}[language=bash]
+\$ nodetool flush cycling;
+\end{lstlisting}
+
+После выполнения команды необходимо получить выгрузку в формате
+json с помощью утилиты sstabledump из файла. Для начала необходимо перейти
+в соответствующую директорию cycling и найти rank\_by\_year\_and\_name-<...>.
+Название папки может частично отличаться.
+Чтобы узнать имя необходимой директории перейдите
+в /var/lib/cassandra/data/cycling и введите команду \texttt{ls}.
+
+\begin{lstlisting}[language=bash]
+\$ cd /var/lib/cassandra/data/cycling/
+	rank\_by\_year\_and\_namebc05fba12baf11e8b4a8ad2b042f3e18
+\end{lstlisting}
+
+После этого выполняем команду sstabledump для файла "<mc-2-big-Data.db">.
+
+\begin{lstlisting}[language=bash]
+\$ sstabledump mc-2-big-Data.db
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-43-09}
+	\caption{Выгрузка в формате json}
+	\label{fig:sstabledump:json}
+\end{image}
+
+\section{Tombstone для разделов}
+
+Tombstone для разделов (Partition tombstones) создаются, когда весь
+раздел (partition) удален. Можно увидеть, что условие WHERE совпадает с
+ключом раздела (partition key).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-46-28}
+	\caption{Удаление раздела}
+	\label{fig:cqlsh:partition:delete}
+\end{image}
+
+В выводе \texttt{sstabledump} для данного раздела (тут также необходимо
+выполнить nodetool flush и получить выгрузку с последнего созданного
+файла "<<...>-big-Data.db">). Данные о времени удаления (deletion\_info)
+написаны на уровне раздела и не привязаны к конкретным строкам или
+ячейкам.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-47-29}
+	\caption{Выгрузка в формате json}
+	\label{fig:sstabledump:partition:delete}
+\end{image}
+
+\section{Tombstone для строк}
+
+Tombstone для строк генерируется при удалении для каждой строки
+отдельно. Созданная ранее таблица rank\_by\_year\_and\_name имеет
+составной первичный ключ, который включает в себя как ключ раздела, так и
+ключ кластеризации. В данном случае при удалении условие WHERE
+затрагивает оба ключа.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-48-37}
+	\caption{Удаление строки}
+	\label{fig:cqlsh:line:delete}
+\end{image}
+
+В выводе \texttt{sstabledump} для этого раздела,
+tombstone маркер deletion\_info находится на уровне строки,
+так как затрагивает уже не только ключ раздела, но еще и ключ кластеризации.
+При этом раздел и ячейки не содержат этого маркера.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-55-29}
+	\caption{Выгрузка в формате json}
+	\label{fig:sstabledump:line:delete}
+\end{image}
+
+\section{Tombstone для диапазонов}
+
+Tombstones для диапазона возникают, когда записи в разделе удаляются с
+помощью поиска по диапазону. Для начала необходимо удалить таблицу
+rank\_by\_year\_and\_name и создать заново, перезаполнив ее (См. пункт
+"<Создание keyspace и таблиц">). Обратите внимание, что создастся новая
+директория, так как таблица пересоздана.\par
+Затем выполнить следующую команду, в которой указано также
+неравенство (rank > 1). Выполните команду и посмотрите, что выдаст
+\texttt{sstabledump}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 14-03-52}
+	\caption{Удаление строки}
+	\label{fig:cqlsh:range:delete}
+\end{image}
+
+В данном случае при выводе результата с \texttt{sstabledump} можно увидеть 2
+маркера range\_tombstone\_bound, которые отмечают область удаленных записей.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 14-04-04}
+	\caption{Выгрузка в формате json}
+	\label{fig:sstabledump:range:delete}
+\end{image}
+
+\section{ComplexColumn tombstones}
+
+ComplexColumn Tombstones возникают при вставке или обновлении
+столбца, хранящего коллекции (set, list, map). Ранее мы создали таблицу
+cyclist\_care\_teams. Выполните следующую команду в cqlsh, чтобы
+вставить запись в таблицу.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-55-29}
+	\caption{Удаление строки}
+	\label{fig:cqlsh:complexcolumn}
+\end{image}
+
+В выходных данных \texttt{sstabledump} для раздела таблицы
+cyclist\_career\_teams маркер deletion\_info указан на уровне ячейки
+только для столбцов типа коллекции, хоть в разделе не происходит удаления.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 13-57-48}
+	\caption{Выгрузка в формате json}
+	\label{fig:sstabledump:complexcolumn}
+\end{image}
+
+\section{Tombstone для ячейки}
+
+Tombstone для ячеек создаются при удалении значения из ячейки или при
+вставке в ячейку null, как показано в следующем примере.\par
+В данном случае deletion\_info будет привязано к конкретной ячейке.
+
+\begin{image}
+	\includegrph{cell}
+	\caption{Удаление ячейки и выгрузка в формате json}
+	\label{fig:cqlsh-sstabledump:complexcolumn}
+\end{image}
+
+\section{Установка времени жизни записи (TTL)}
+
+TTL можно использовать для вставки данных в таблицу на определенный
+срок, указываемый в секундах. Чтобы задать TTL для записи, используются
+ключевые слова USING TTL. Чтобы определить время жизни записи
+необходима функция TTL.\par
+Вставьте данные в таблицу cycling.calendar и используйте USING
+TTL, чтобы установить период истечения жизни записи на 86400 секунд.\par
+Выполните команду SELECT, чтобы определить, сколько запись будет
+хранится.\par
+Значение времени жизни также может быть обновлено с помощью
+ключевых слов USING TTL в команде UPDATE.\par
+Выполните SELECT еще раз, чтобы удостовериться, что TTL изменился.
+Также можно установить TTL для одной ячейки.
+
+\begin{image}
+	\includegrph{ttl}
+	\caption{Установка времени жизни записи ttl}
+	\label{fig:ttl}
+\end{image}
+
+\section{TTL tombstones}
+
+TTL tombstones создаются, когда TTL записи истек. Cassandra создает не
+такой tombstone для TTL, какой создается при удалении с помощью оператора
+DELETE. Также даже если раздел содержит только одну строку (без ключа
+кластеризации), отметка TTL все равно делается на уровне строки.
+В первом случае при использовании sstabledump CQL помечает всю
+строку (partition key: 200) маркером "expired" : true в разделе liveness\_info.
+
+\begin{image}
+	\includegrph{tombstones}
+	\caption{Выгрузка в формате json}
+	\label{fig:tombstones:cycling}
+\end{image}
+
+Во втором случае помечается отдельная ячейка.
+
+\begin{image}
+	\includegrph{tombstones1}
+	\caption{Выгрузка в формате json}
+	\label{fig:tombstone:rank-by-year-and-name}
+\end{image}
+
+Вам необходимо применить функцию USING TTL для строки и для
+ячейки, а после сделать выгрузку с помощью sstabledump после того, как срок
+жизни строки/ячейки закончится.
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+В данной работе мы ознакомились со специальноыми значениями,
+известными как tombstone, которое Cassandra создает чтобы указать,
+что данные были удалены.\par
+Эти значения предотвращают возврат удаленных данных во время чтения
+и в конечном итоге позволяют удалить данные посредством сжатия.\par
+Tombstones являются частью реализации модели хранения данных (во
+время записи существующие данные не читаются).\par
+Также познакомились со столбцами и таблицами поддерживающими
+необязательный срок действия, называемый TTL (time-to-live).
+
