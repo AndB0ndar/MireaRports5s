@@ -1,0 +1,293 @@
+\section{Выполнение практической работы}
+
+\section{Настройка устройств и проверка подключения}
+
+\subsection{Настройте маршрутизатор}
+
+\begin{verbatim}
+enable
+config terminal
+hostname R1_BONDAR
+no ip domain lookup
+security passwords min-length 10
+enable secret cisco12345
+line console 0
+password ciscoconpass
+exec-timeout 5 0
+login
+logging synchronous
+exit
+line vty 0 4
+password ciscovtypass
+exec-timeout 5 0
+login
+logging synchronous
+exit
+service password-encryption
+banner motd # You must be authorizeded! #
+interface g0/0/0
+ip address 192.168.0.1 255.255.255.0
+no shutdown
+interface g0/0/1
+ip address 192.168.1.1 255.255.255.0
+no shutdown
+end
+clock set 20:00:00 18 Mar 2024
+copy running-config startup-config
+\end{verbatim}
+
+\textbf{Укажите способы усиления защиты паролей,
+кроме установки минимальной длины.}
+
+Используйте в паролях заглавные буквы, цифры и специальные символы.
+
+\textbf{Что произойдет, если перезагрузить маршрутизатор до того,
+как будет выполнена команда \texttt{copy running-config startup-config}?}
+
+Содержимое запущенной конфигурации будет удалено.
+В этой лабораторной работе маршрутизатор не будет иметь конфигурации запуска.
+После перезагрузки пользователя спросят,
+хочет ли он войти в диалоговое окно начальной настройки.
+
+\subsection{Проверьте подключение к сети}
+
+Из командной строки компьютера PC-B отправьте эхо-запрос на компьютер PC-A.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 19-55-11}
+	\caption{Эхо-запрос от PC-B к PC-A}
+\end{image}
+
+\textbf{Успешно ли выполнена проверка связи?}
+
+Да
+
+\textbf{Какой тип удаленного доступа будет использоваться для получения
+доступа к маршрутизатору R1\_ФАМИЛИЯ после завершения этого набора команд?}
+
+Telnet
+
+Подключитесь к маршрутизатору R1\_ФАМИЛИЯ
+от компьютера PC-A с помощью службы Telnet.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 19-55-11}
+	\caption{Подключение по Telnet}
+\end{image}
+
+\textbf{Почему использование протокола Telnet считается угрозой безопасности?}
+
+Сеанс Telnet можно увидеть в виде открытого текста. Он не зашифрован.
+Пароли можно легко увидеть с помощью анализатора пакетов.
+
+\subsection{Настройте маршрутизатор для доступа по протоколу SSH}
+Активируйте подключения SSH и создайте пользователя
+(username --- ваша фамилия на английском языке,
+доменное имя маршрутизатора --- CCNA-lab.com)
+в локальной базе данных маршрутизатора. Длина ключа шифрования --- 1024 бит.
+Не забудьте записать пароль, чтобы не забыть его при повторном подключении.
+
+\begin{verbatim}
+ip domain-name CCNA-lab.com
+username andrey privilege 15 secret andreypass1
+line vty 0 4
+transport input ssh
+login local
+exit
+crypto key generate rsa
+exit
+\end{verbatim}
+
+Подключитесь к маршрутизатору R1\_ФАМИЛИЯ
+от компьютера PC-A по протоколу SSH.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-08-11}
+	\caption{Подключение по SSH}
+\end{image}
+
+\textbf{Удаленный доступ был настроен успешно?}
+
+Да
+
+\section{Отображение сведений о маршрутизаторе}
+
+\subsection{Установите SSH-подключение к R1\_ФАМИЛИЯ}
+
+На компьютере PC-B создайте сеанс SSH с маршрутизатором R1\_ФАМИЛИЯ
+по IP-адресу 192.168.0.1 и войдите в систему, используя имя пользователя
+(ваша фамилия на английском языке) и пароль,
+который вы придумали самостоятельно.
+
+\subsection{Получите основные данные об аппаратном и программном обеспечении}
+
+Используйте команду \texttt{show version},
+чтобы ответить на вопросы о маршрутизаторе.
+
+\textbf{Как называется образ IOS,
+под управлением которой работает маршрутизатор?}
+
+Версия изображения может отличаться, но ответы должны быть примерно такими:
+isr4300-universalk9.16.06.04.SPA.bin.
+
+\textbf{Какой объем энергонезависимого ОЗУ (NVRAM) имеет маршрутизатор?}
+
+4194304K
+
+\textbf{Каким объемом флеш-памяти обладает маршрутизатор?}
+
+3207167K
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-13-32}
+	\caption{Вывод команды show version}
+\end{image}
+
+Зачастую команды \texttt{show} могут выводить несколько экранов данных.
+Фильтрация выходных данных позволяет пользователю отображать
+лишь нужные разделы выходных данных.
+Чтобы включить команду фильтрации, после команды \texttt{show}
+введите прямую черту (|),
+после которой следует ввести параметр и выражение фильтрации.
+Чтобы отобразить все строки выходных данных,
+которые содержат выражение фильтрации,
+можно согласовать выходные данные с оператором фильтрации
+с помощью ключевого слова include.
+Настройте фильтрацию для команды\texttt{show version} 
+и используйте команду \texttt{show version | include register},
+чтобы ответить на следующий вопрос.
+
+\textbf{Какому процессу загрузки последует маршрутизатор
+при следующей перезагрузке?}
+
+Configuration register is 0x2102
+
+\subsection{Отобразите загрузочную конфигурацию}
+
+\begin{verbatim}
+show startup-config
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-23-40}
+	\caption{Вывод команды show startup-config}
+\end{image}
+
+\textbf{Как пароли представлены в выходных данных?}
+
+\begin{verbatim}
+show startup-config | begin vty
+\end{verbatim}
+
+\texttt{НЕ РАБОТАЕТ}
+
+\textbf{Что происходит в результате выполнения этой команды?}
+
+\subsection{Отобразите таблицу маршрутизации на маршрутизаторе}
+
+\begin{verbatim}
+show ip route
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-27-06}
+	\caption{Вывод команды show ip route}
+\end{image}
+
+\textbf{Какой код используется в таблице маршрутизации
+для обозначения сети с прямым подключением?}
+
+Буква C обозначает подсеть с прямым подключением.
+Буква L обозначает локальный интерфейс.
+
+\textbf{Сколько записей маршрутов закодированы с символом «C»
+в таблице маршрутизации?}
+
+2
+
+\subsection{Отобразите на маршрутизаторе сводный список интерфейсов}
+
+\begin{verbatim}
+show ip interface brief
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-29-47}
+	\caption{Вывод команды show ip interface brief}
+\end{image}
+
+\textbf{Какая команда позволяет изменить состояние
+портов Gigabit Ethernet с DOWN на UP?}
+
+no shutdown
+
+\section{Настройка протокола IPv6 и проверка подключения}
+\subsection{Назначьте IPv6-адреса интерфейсу G0/0 маршрутизатора R1\_ФАМИЛИЯ
+и включите IPv6-маршрутизацию}
+
+Назначьте интерфейсу G0/0 глобальный индивидуальный
+IPv6-адрес --- 2001:db8:acad:a::1/64,
+в дополнение к индивидуальному адресу на интерфейсе назначьте локальный адрес
+канала (linklocal) --- fe80::1. Включите IPv6-маршрутизацию.
+
+\begin{verbatim}
+configure terminal
+interface g0/0
+ipv6 address 2001:db8:acad:a::1/64
+ipv6 address fe80::1 link-local
+no shutdown
+exit
+ipv6 unicast-routing
+exit
+\end{verbatim}
+
+Проверьте параметры IPv6 на маршрутизаторе R1\_ФАМИЛИЯ.
+
+\begin{verbatim}
+show ipv6 interface brief
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-36-25}
+	\caption{Вывод команды show ipv6 interface brief}
+\end{image}
+
+\textbf{Если интерфейсу G0/1 не назначен IPv6-адрес,
+то почему он отображается как [up/up] (ВКЛ/ВКЛ)?}
+
+Статус [up/up] отражает статус интерфейса уровня 1 и уровня 2
+и не зависит от статуса уровня 3.
+
+На компьютере PC-B выполните команду для отображения настроек IPv6.
+
+\begin{verbatim}
+ipconfig
+\end{verbatim}
+
+\textbf{Какой IPv6-адрес назначен компьютеру PC-B?}
+
+Link-local IPv6 Address.........: FE80::2D0:D3FF:FEEA:441C
+
+\textbf{Какой шлюз по умолчанию назначен компьютеру PC-B?}
+
+FE80::1 и 192.168.0.1
+
+От компьютера PC-B отправьте эхо-запрос на локальный адрес
+канала шлюза по умолчанию маршрутизатора R1\_ФАМИЛИЯ.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 20-53-30}
+	\caption{Эхо-запрос от PC-B к R1 по ipv6}
+\end{image}
+
+\textbf{Была ли проверка успешной?}
+
+Да
+
+От компьютера PC-B отправьте эхо-запрос на индивидуальный IPv6-адрес
+маршрутизатора R1\_ФАМИЛИЯ 2001:db8:acad:a::1.
+
+\textbf{Была ли проверка успешной?}
+
+Да
+
