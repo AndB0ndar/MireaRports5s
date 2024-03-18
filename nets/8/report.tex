@@ -1,0 +1,280 @@
+\section{Выполнение практической работы}
+
+\section{Создание сети и настройка основных параметров устройства}
+
+\subsection{Настройте базовые параметры каждого коммутатора}
+
+\begin{verbatim}
+no ip domain lookup
+hostname S1_BONDAR
+line console 0
+password cisco
+login
+logging synchronous
+line vty 0 4
+password cisco
+login
+enable secret class
+interface range f0/1-24, g0/1-2
+shutdown
+end
+copy running-config startup-config
+\end{verbatim}
+
+\section{Настройка сетей VLAN, native VLAN и транковых каналов}
+
+\subsection{Создайте сети VLAN}
+
+Используйте соответствующие команды,
+чтобы создать сети VLAN 10 и 99 на всех коммутаторах.
+Присвойте сети VLAN 10 имя User\_ФАМИЛИЯ, а сети VLAN 99 --- имя Management.
+
+\begin{verbatim}
+vlan 10
+name User_BONDAR
+vlan 99
+name Management
+\end{verbatim}
+
+\subsection{Переведите пользовательские порты в режим доступа
+	и назначьте сети VLAN}
+
+Для интерфейса F0/6 S1\_ФАМИЛИЯ и интерфейса F0/18 S3 включите порты,
+настройте их в качестве портов доступа и назначьте их сети VLAN 10.
+
+\begin{verbatim}
+interface f0/6  // S1
+interface f0/18  // S3
+no shutdown
+switchport mode access
+switchport access vlan 10
+\end{verbatim}
+
+\subsection{Настройте транковые порты и назначьте их сети native VLAN 99}
+
+Для портов F0/1 и F0/3 на всех коммутаторах включите порты,
+настройте их в качестве транковых и назначьте их сети native VLAN 99.
+
+\begin{verbatim}
+interface range f0/1,f0/3
+no shutdown
+switchport mode trunk
+switchport trunk native vlan 99
+\end{verbatim}
+
+\subsection{Настройте административный интерфейс на всех коммутаторах}
+
+Используя таблицу адресации, настройте на всех коммутаторах административный
+интерфейс с соответствующим IP-адресом.
+
+\begin{verbatim}
+interface vlan 99
+ip address 192.168.4.11 255.255.255.0  // S1
+ip address 192.168.4.12 255.255.255.0  // S2
+ip address 192.168.4.13 255.255.255.0  // S3
+\end{verbatim}
+
+\subsection{Проверка конфигураций и возможности подключения}
+
+Используйте команду \texttt{show vlan brief} на всех коммутаторах,
+чтобы убедиться в том, что все сети VLAN внесены в таблицу VLAN
+и назначены правильные порты.\par
+Используйте команду \texttt{show interfaces trunk} на всех коммутаторах
+для проверки магистральных интерфейсов.\par
+Используйте команду \texttt{show running-config} на всех коммутаторах,
+чтобы проверить все остальные конфигурации.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-02-37}
+	\caption{Результат комадны show vlan brief}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-04-04}
+	\caption{Результат комадны show interfaces trunk}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-05-28}
+	\caption{Результат комадны show running-config}
+\end{image}
+
+\textbf{Какие настройки используются для режима протокола spanning-tree
+	на коммутаторах Cisco?}
+
+Режим связующего дерева по умолчанию --- PVST+.
+
+\textbf{Проверьте подключение между компьютерами PC-A и PC-C.
+	Удалось ли получить ответ на эхо-запрос?}
+
+Да
+
+Если эхо-запрос выполнить не удалось, следует выполнять отладку до тех пор,
+пока проблема не будет решена.
+
+\section{Настройка корневого моста и проверка сходимости PVST+}
+\subsection{Определите текущий корневой мост}
+
+\textbf{С помощью какой команды пользователи определяют состояние
+протокола spanning-tree коммутатора Cisco Catalyst для всех сетей VLAN?}
+
+\begin{verbatim}
+show spanning-tree
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-13-06}
+	\caption{Результат комадны show spanning-tree на S1}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-13-34}
+	\caption{Результат комадны show spanning-tree на S2}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-13-55}
+	\caption{Результат комадны show spanning-tree на S3}
+\end{image}
+
+\textbf{Каков приоритет моста коммутатора S1\_ФАМИЛИЯ для сети VLAN 1?}
+
+32769
+
+\textbf{Каков приоритет моста коммутатора S2 для сети VLAN 1?}
+
+32769
+
+\textbf{Каков приоритет моста коммутатора S3 для сети VLAN 1?}
+
+32769
+
+\textbf{Какой коммутатор является корневым мостом?}
+
+S3
+
+\textbf{Почему этот коммутатор выбран в качестве корневого моста?}
+
+По умолчанию связующее дерево выбирает корневой мост
+на основе наименьшего MAC-адреса.
+
+\subsection{Настройте основной и вспомогательный корневые мосты
+	для всех существующих сетей VLAN}
+
+Настройте коммутатор S2 в качестве основного корневого моста для всех существующих сетей VLAN.
+
+\begin{verbatim}
+spanning-tree vlan 1,10,99 root primary
+\end{verbatim}
+
+Настройте коммутатор S1\_ФАМИЛИЯ в качестве
+вспомогательного корневого моста для всех существующих сетей VLAN.
+Запишите команду в строке ниже.
+
+\begin{verbatim}
+spanning-tree vlan 1,10,99 root secondary
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 19-20-31}
+	\caption{Результат комадны show spanning-tree}
+\end{image}
+
+Используйте команду \texttt{show spanning-tree} для ответа
+на следующие вопросы:
+
+\textbf{Какой приоритет моста используется
+для коммутатора S1\_ФАМИЛИЯ в сети VLAN 1?}
+
+24577
+
+\textbf{Какой приоритет моста используется для коммутатора S2 в сети VLAN 1?}
+
+24577
+
+\textbf{Какой интерфейс в сети находится в состоянии блокировки?}
+
+Интерфейс F0/3 на коммутаторе S3
+
+\subsection{Измените топологию 2-го уровня и проверьте сходимость}
+
+Выполните команду\texttt{debug spanning-tree events} 
+в привилегированном режиме на коммутаторе S3.
+
+\textbf{НЕ РАБОТАЕТ}
+
+Через какие состояния портов проходит каждая сеть VLAN
+на интерфейсе F0/3 в процессе схождения сети?
+
+Используя временную метку из первого и последнего сообщений отладки STP,
+рассчитайте время (округляя до секунды),
+которое потребовалось для схождения сети.
+Рекомендация. Формат временной метки сообщений отладки: чч.мм.сс.мс
+
+\section{Настройка Rapid PVST+, PortFast, BPDU Guard и проверка сходимости}
+
+\subsection{Настройте Rapid PVST+}
+
+Настройте S1 для использования Rapid PVST+.
+
+\begin{verbatim}
+spanning-tree mode rapid-pvst
+\end{verbatim}
+
+Настройте коммутаторы S2 и S3 для Rapid PVST+.
+
+\begin{verbatim}
+spanning-tree mode rapid-pvst
+\end{verbatim}
+
+Проверьте конфигурации с помощью команды
+\texttt{show running-config | include spanning-tree mode}.\\
+
+\textit{spanning-tree mode rapid-pvst}
+
+\subsection{Настройте PortFast и BPDU Guard на портах доступа}
+
+Настройте F0/6 на S1\_ФАМИЛИЯ с помощью функции PortFast.
+
+\begin{verbatim}
+interface f0/6
+spanning-tree portfast
+\end{verbatim}
+
+Настройте F0/6 на S1\_ФАМИЛИЯ с помощью функции BPDU Guard.
+
+\begin{verbatim}
+interface f0/6
+spanning-tree bpduguard enable
+\end{verbatim}
+
+Глобально настройте все нетранковые порты
+на коммутаторе S3 с помощью функцииPortFast.
+
+\begin{verbatim}
+spanning-tree portfast default
+\end{verbatim}
+
+Глобально настройте все нетранковые порты
+на коммутаторе S3 с помощью функции BPDU.
+
+\begin{verbatim}
+spanning-tree portfast bpduguard default
+\end{verbatim}
+
+\subsection{Проверьте сходимость Rapid PVST+}
+
+Выполните команду\texttt{debug spanning-tree events} 
+в привилегированном режиме на коммутаторе S3.
+
+\textbf{НЕ РАБОТАЕТ}
+
+Измените топологию, отключив интерфейс F0/1 на коммутаторе S3.
+Используя временную метку из первого и последнего сообщений отладки RSTP,
+рассчитайте время, которое потребовалось для схождения сети.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-18 17-39-15}
+	\caption{Отправки эхо запросов с копьютера на компьютер}
+\end{image}
+
