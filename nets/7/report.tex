@@ -1,0 +1,573 @@
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Настройте маршрутизатор R1\_ФАМИЛИЯ}
+
+\subsection{Настройте маршрутизатор R1\_ФАМИЛИЯ}
+
+Загрузите следующий конфигурационный скрипт на R1\_ФАМИЛИЯ
+
+\begin{verbatim}
+enable
+configure terminal
+hostname R1_BONDAR
+no ip domain lookup
+ip dhcp excluded-address 192.168.13.1 192.168.13.9
+ip dhcp excluded-address 192.168.13.201 192.168.13.202
+!
+ip dhcp pool Students
+ network 192.168.13.0 255.255.255.0
+ default-router 192.168.13.1
+ domain-name CCNA2.Lab-11.6.1
+!
+interface Loopback0
+ ip address 10.10.1.1 255.255.255.0
+!
+interface GigabitEthernet0/0/1
+ description Link to S1
+ ip dhcp relay information trusted
+ ip address 192.168.13.1 255.255.255.0
+ no shutdown
+!
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+\end{verbatim}
+
+Проверьте конфигурацию сетевых интерфейсов на R1\_ФАМИЛИЯ.
+
+\begin{verbatim}
+show ip interface brief
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-15-04}
+	\caption{Результат комадны show ip interface brief}
+\end{image}
+
+Убедитесь, что IP-адресация и интерфейсы находятся
+в состоянии up / up (при необходимости устраните неполадки).
+
+\subsection{Настройка и проверка основных параметров коммутатора}
+
+Настройте имя хоста для коммутаторов S1 и S2.
+
+\begin{verbatim}
+config t
+hostname S1  // S1
+hostname S2  // S2
+\end{verbatim}
+
+Запретите нежелательный поиск в DNS.
+
+\begin{verbatim}
+no ip domain-lookup
+\end{verbatim}
+
+Настройте описания интерфейса для портов, которые используются в S1 и S2.
+
+\begin{verbatim}
+// S1
+interface f0/1
+description Link to S2
+interface f0/5
+description Link to R1
+interface f0/6
+description Link to PC-A
+
+// S2
+interface f0/1
+description Link to S1
+interface f0/18
+description Link to PC-B
+\end{verbatim}
+
+Установите для шлюза по умолчанию для VLAN управления значение 192.168.13.1
+на обоих коммутаторах.
+
+\begin{verbatim}
+ip default-gateway 192.168.13.1
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-22-25}
+	\caption{Конфигурация коммутаторов}
+\end{image}
+
+\section{Настройка сетей VLAN на коммутаторах}
+
+\subsection{Сконфигруриуйте VLAN 13}
+
+Добавьте VLAN 13 на S1 и S2 и назовите VLAN - Management.
+
+\begin{verbatim}
+vlan 13
+name Management
+\end{verbatim}
+
+\subsection{Сконфигруриуйте SVI для VLAN 13}
+
+Настройте IP-адрес в соответствии с таблицей адресации для SVI для VLAN 13
+на S1 и S2. Включите интерфейсы SVI и предоставьте описание для интерфейса.
+
+\begin{verbatim}
+interface vlan 13
+ip address 192.168.13.201 255.255.255.0  // S1
+ip address 192.168.13.202 255.255.255.0  // S2
+description Management SVI
+no shutdown
+\end{verbatim}
+
+\subsection{Настройте VLAN 333 с именем Native на S1 и S2}
+
+\begin{verbatim}
+vlan 333
+name Native
+\end{verbatim}
+
+\subsection{Настройте VLAN 999 с именем ParkingLot на S1 и S2}
+
+\begin{verbatim}
+vlan 999
+name ParkingLot
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-31-43}
+	\caption{Настроеные vlan коммутаторов}
+\end{image}
+
+\section{Настройки безопасности коммутатора}
+
+\subsection{Релизация магистральных соединений 802.1Q}
+
+Настройте все магистральные порты Fa0/1 на обоих коммутаторах
+для использования VLAN 333 в качестве native VLAN.
+
+\begin{verbatim}
+interface f0/1
+switchport mode trunk
+switchport trunk native vlan 333
+\end{verbatim}
+
+Убедитесь, что режим транкинга успешно настроен на всех коммутаторах
+с помощью команды \texttt{show interface trunk} на обоих коммутаторах.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-42-37}
+	\caption{Результат комадны show interface trunk}
+\end{image}
+
+Отключить согласование DTP F0/1 на S1 и S2.
+
+\begin{verbatim}
+interface f0/1
+switchport nonegotiate
+\end{verbatim}
+
+Проверьте с помощью команды \texttt{show interfaces}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-44-01}
+	\caption{Результат комадны show interface}
+\end{image}
+
+\subsection{Настройка портов доступа}
+
+На S1 настройте F0/5 и F0/6 в качестве портов доступа и свяжите их с VLAN 13.
+
+\begin{verbatim}
+interface range f0/5 - 6
+switchport mode access
+switchport access vlan 13
+\end{verbatim}
+
+На S2 настройте порт доступа Fa0/18 и свяжите его с VLAN 13.
+
+\begin{verbatim}
+interface f0/18
+switchport mode access
+switchport access vlan 13
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-45-26}
+	\caption{Настроеные vlan коммутаторов}
+\end{image}
+
+
+\subsection{Безопасность неиспользуемых портов коммутатора}
+
+На S1 и S2 переместите неиспользуемые порты из VLAN 1 в VLAN 999
+и отключите неиспользуемые порты.
+
+\begin{verbatim}
+interface range f0/2-4 , f0/7-24, g0/1-2  // S1
+interface range f0/2-17 , f0/19-24, g0/1-2  // S2
+switchport mode access
+switchport access vlan 999
+shutdown
+\end{verbatim}
+
+Убедитесь, что неиспользуемые порты отключены и связаны с VLAN 999,
+введя команду \texttt{show interfaces status}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-46-40}
+	\caption{Результат комадны show interface status}
+\end{image}
+
+\subsection{Документирование и реализация функций безопасности порта}
+
+Интерфейсы F0/6 на S1 и F0/18 на S2 настроены как порты доступа.
+На этом шаге вы также настроите безопасность портов
+на этих двух портах доступа.
+
+На S1 введите команду\texttt{show port-security interface f0/6} 
+для отображения настроек по умолчанию безопасности порта для интерфейса F0/6.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-51-51}
+	\caption{Результат комадны show port-security interface f0/6}
+\end{image}
+
+На S1 включите защиту порта на F0/6 со следующими настройками:
+
+\begin{itemize}
+	\item Максимальное количество записей MAC-адресов: 3
+	\item Режим безопасности: restrict
+	\item Aging time: 60 мин.
+	\item Aging type: неактивный
+\end{itemize}
+
+\begin{verbatim}
+interface f0/6
+switchport port-security
+switchport port-security maximum 3
+switchport port-security violation restrict
+switchport port-security aging time 60
+switchport port-security aging type inactivity
+\end{verbatim}
+
+Проверьте настройки защиты порта (port-security) на S1 для интерфейса F0/6.
+Далее просмотрите выходные данные команды \texttt{show port-security address}.
+
+\begin{verbatim}
+show port-security interface f0/6
+\end{verbatim}
+
+\begin{verbatim}
+show port-security address
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-55-10}
+	\caption{Результат комадны show port-security address}
+\end{image}
+
+Включите безопасность порта для F0/18 на S2.
+Настройте каждый активный порт доступа таким образом,
+чтобы он автоматически добавлял адреса МАС, изученные на этом порту,
+в текущую конфигурацию.
+
+\begin{verbatim}
+interface f0/18
+switchport port-security
+switchport port-security mac-address sticky
+\end{verbatim}
+
+Настройте следующие параметры безопасности порта на S2 F0/18:
+
+\begin{itemize}
+	\item Максимальное количество записей MAC-адресов: 2
+	\item Тип безопасности: Protect
+	\item Aging time: 60 мин.
+\end{itemize}
+
+\begin{verbatim}
+interface f0/18
+switchport port-security aging time 60
+switchport port-security maximum 2
+switchport port-security violation protect
+\end{verbatim}
+
+Проверьте настройки защиты порта (port-security)
+на S2 для интерфейса F0/18. Далее просмотрите выходные
+данные команды \texttt{show port-security address}.
+
+\begin{verbatim}
+show port-security interface f0/18
+\end{verbatim}
+
+\begin{verbatim}
+show port-security address
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 21-57-13}
+	\caption{Результат комадны show port-security address}
+\end{image}
+
+\subsection{Реализовать безопасность DHCP snooping}
+
+На S2 включите DHCP snooping и настройте DHCP snooping во VLAN X+10.
+
+\begin{verbatim}
+ip dhcp snooping
+ip dhcp snooping vlan 13
+\end{verbatim}
+
+Настройте магистральные порты на S2 как доверенные порты.
+
+\begin{verbatim}
+interface f0/1
+ip dhcp snooping trust
+\end{verbatim}
+
+Ограничьте ненадежный порт Fa0/18 на S2 пятью DHCP-пакетами в секунду.
+
+\begin{verbatim}
+interface f0/18
+ip dhcp snooping limit rate 5
+\end{verbatim}
+
+Проверьте DHCP Snooping на S2 с помощью команды show ip dhcp snooping.
+
+\begin{verbatim}
+show ip dhcp snooping
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-02-03}
+	\caption{Результат комадны show ip dhcp snooping}
+\end{image}
+
+В командной строке на PC-B освободите, а затем обновите IP-адрес.
+
+\begin{verbatim}
+C:\Users\Student> ipconfig /release
+C:\Users\Student> ipconfig /renew
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-03-38}
+	\caption{Результат комадны ipconfig}
+\end{image}
+
+Проверьте привязку отслеживания DHCP
+с помощью команды \texttt{show ip dhcp snooping binding}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-04-03}
+	\caption{Результат комадны show ip dhcp snooping binding}
+\end{image}
+
+\subsection{Реализация PortFast и BPDU Guard}
+
+Настройте PortFast на всех портах доступа,
+которые используются на обоих коммутаторах.
+
+\begin{verbatim}
+interface range f0/5 - 6  // S1
+interface f0/18  // S2
+spanning-tree portfast
+\end{verbatim}
+
+Включите защиту BPDU на портах доступа VLAN 13 для S1 и S2,
+подключенных к PC-A и PC-B.
+
+\begin{verbatim}
+interface f0/6  // S1
+interface f0/18  // S2
+spanning-tree bpduguard enable
+\end{verbatim}
+
+Убедитесь, что защита BPDU и PortFast включены на соответствующих портах
+с помощью команды \texttt{show spanning-tree interface f0/6 detail}.
+
+\begin{verbatim}
+show spanning-tree interface f0/6 detail
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-06-33}
+	\caption{Результат комадны show spanning-tree interface f0/6 detail}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-07-32}
+	\caption{Результат комадны show spanning-tree interface f0/18 detail}
+\end{image}
+
+
+
+\subsection{Проверьте наличие сквозного подключения}
+
+Отправьте эхо-запрос между всеми устройствами в таблице IP-адресации. 
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-19 22-13-08}
+	\caption{Отправка эхо-запросов между всеми устройствами}
+\end{image}
+
+\section{Ответы на контрольные вопросы}
+
+\subsection{Для чего необходимо обеспечить безопасность портов 
+коммутатора? Что произойдет, если к порту с включенной 
+безопасностью подключают более одного устройства и почему?}
+
+Обеспечение безопасности портов коммутатора имеет ряд важных 
+причин:
+
+\begin{itemize}
+	\item защита от несанкционированного доступа;
+	\item защита от атак;
+	\item контроль трафика;
+	\item повышение устойчивости сети.
+\end{itemize}
+
+Если активный порт настроен с помощью команды switchport port-
+security и к этому порту подключено более одного устройства, порт перейдет 
+в состояние error-disabled.
+
+\subsection{Какое минимальное и максимальное количество MAC-адресов 
+может быть разрешено на одном порту коммутатора? Опишите 
+все существующие способы изучения MAC-адресов на 
+коммутаторе}
+
+Для определения максимального числа MAC адресов, разрешенных для 
+конкретного порта, используется команда:
+
+\begin{verbatim}
+Switch(config-if)# switchport port-security maximum ?
+\end{verbatim}
+
+Значение безопасности порта по умолчанию равно 1. Максимальное 
+количество защищенных MAC-адресов, которые можно настроить, зависит 
+от коммутатора и IOS.
+
+Коммутатор может быть настроен на изучение MAC-адресов на 
+защищенном порту одним из трех способов:
+
+\begin{itemize}
+	\item Вручную
+	\item Динамически изученный
+	\item Динамически изученный sticky MAC адрес
+\end{itemize}
+
+\subsection{Опишите существующие типы устаревания безопасности порта. 
+Каким образом можно активировать отключенный по ошибке 
+порт коммутатора?}
+
+Для каждого порта поддерживается два типа старения:
+
+\begin{itemize}
+	\item Абсолютный --- защищенные адреса порта удаляются по истечении 
+		указанного времени устаревания.
+	\item По таймеру неактивности --- безопасные адреса на порту 
+		удаляются, только если они неактивны в течение указанного 
+		времени.
+\end{itemize}
+
+Когда защищенный порт находится в состоянии отключения по 
+ошибке, администратор должен повторно включить его, используя сначала 
+команду shutdown, затем используя команду no shutdown, чтобы сделать 
+порт работоспособным.
+
+\subsection{Дайте характеристику режимам нарушения безопасности порта. 
+В чем заключается опасность включенного протокола 
+согласования DTP?}
+
+Режимы нарушения безопасности порта:
+ 
+\begin{itemize}
+	\item Защита
+	\item Ограничение
+	\item Выключение
+\end{itemize}
+
+Подмена сообщений DTP от атакующего хоста, чтобы заставить 
+коммутатор войти в режим транкинга. Отсюда злоумышленник может 
+отправлять трафик, помеченный целевой VLAN, а затем коммутатор 
+доставляет пакеты в пункт назначения.
+
+\subsection{Опишите суть технологии DHCP Snooping. Для чего может 
+понадобиться динамиеская проверка ARP?}
+
+DHCP Snooping определяет, является ли DHCP сообщение от 
+административно сконфигурированных доверенного или ненадежного 
+источника. Затем он фильтрует сообщения DHCP и объем DHCP трафика из 
+ненадежных источников.\par
+В типичной атаке ARP злоумышленник может отправлять 
+незапрошенные ответы ARP другим узлам в подсети с MAC-адресом 
+субъекта угрозы и IP-адресом шлюза по умолчанию. Чтобы предотвратить 
+подделку ARP и вызванное ею отравление ARP, коммутатор должен 
+обеспечить передачу только действительных запросов и ответов ARP. 
+Динамическая проверка ARP (DAI) требует отслеживания DHCP и 
+помогает предотвратить атаки ARP.
+
+\subsection{Перечислите рекомендации по настройке портов с помощью 
+динамической проверки ARP. Почему необходимо включать 
+функции BPDU Guard И PortFast?}
+
+Рекомендации по настройке портов с помощью DAI:
+
+\begin{itemize}
+	\item Включить отслеживание DHCP на глобальном уровне.
+	\item Включите отслеживание DHCP на выбранных VLAN.
+	\item Включите DAI на выбранных VLAN.
+	\item Настроить доверенные интерфейсы для отслеживания DHCP и 
+		проверки ARP.
+\end{itemize}
+
+Чтобы нейтрализовать атаки манипуляций с протоколом STP, 
+используйте средства защиты PortFast и Bridge Protocol Data Unit (BPDU).
+
+\subsection{Какие шаги необходимо предпринять для устранения угрозы 
+VLAN Hopping?}
+
+Шаги, чтобы нейтрализовать атаки VLAN Hopping:
+Отключите согласование DTP (автоматические магистральные 
+каналы) на немагистральных портах с помощью команды 
+интерфейсной настройки switchport mode access.
+Отключите неиспользуемые порты и назначьте их 
+неиспользуемой VLAN.\par
+Вручную включите магистральный канал на магистральном 
+порту с помощью команды интерфейсной настройки switchport 
+mode trunk.\par
+Отключите согласование DTP (автоматические магистральные 
+каналы) на немагистральных портах с помощью команды 
+интерфейсной настройки switchport mode access.
+Установите для native VLAN, VLAN, отличную от VLAN 1, с 
+помощью команды \verb|switchport trunk native vlan vlan_number command|.
+
+\subsection{Что рекомендуется сделать при использовании сети native 
+VLAN? Какие два типа портов коммутаторов используются на 
+коммутаторах Cisco в составе средств защиты от атак DHCP 
+Snooping?}
+
+Установить для native VLAN, VLAN, отличную от VLAN 1, с помощью 
+команды \verb|switchport trunk native vlan vlan_number command|.\par
+Доверенные порты DHCP --- порты коммутатора, подключенные 
+к восходящим DHCP-серверам.\par
+Недоверенные порты --- порты коммутатора, которые служат для 
+подключения узлов и которые не должны использоваться для 
+сообщений сервера DHCP.
+
+\subsection{Почему устройства уровня 2 считаются самым слабым звеном в 
+инфраструктуре безопасности компании? Где хранятся 
+динамически определяемые MAC-адреса, когда включена 
+функция sticky learning?}
+
+Устройства уровня 2 считаются одними из наиболее уязвимых звеньев 
+в инфраструктуре безопасности компании по нескольким причинам:
+
+\begin{itemize}
+	\item Отсутствие фильтрации трафика.
+	\item Отсутствие средств защиты на уровне 2.
+	\item Отсутствие шифрования.
+\end{itemize}
+
+Когда включена функция sticky learning, динамически определяемые 
+MAC-адреса хранятся в таблице MAC-адресов коммутатора.
+
