@@ -1,0 +1,299 @@
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+\paragraph{ОТСУТСТВИЕ JOIN}
+
+В Cassandra нет опции join. Чаще всего, это ограничение обходится с
+помощью денормализации данных по дополнительным таблицам.
+
+\paragraph{ОТСУТСТВИЕ ВНЕШНИХ КЛЮЧЕЙ}
+
+В Cassandra нет способа связывать сущности из разных таблиц между
+собой, как например, это сделано в реляционных базах с помощью внешних
+ключей. Как следствие отсутствуют такие операции как каскадное удаление.
+
+\paragraph{ДЕНОРМАЛИЗАЦИЯ}
+
+Сама по себе денормализация обладает одним достоинством, в отличие от
+обычного подход. Ее удобно использовать для хранения исторических данных,
+которые ни при каких обстоятельствах не должны изменяться. В качестве
+примера можно привести хранение покупок клиента со ссылками на товар. Т.к.
+цена товара меняется с течением времени, чтобы получить стоимость каждого
+товара на момент приобретения, нужно отдельно хранить цену товара. При
+использовании подхода с денормализацией, можно в таблице с покупками
+хранить полностью объект товара. При этом текущий товар можно изменять
+любым образом и даже удалять и это никак не повлияет на историю покупок
+клиента.
+
+\paragraph{ЗАПРОС ПЕРВИЧЕН}
+
+При проектировании, нужно учитывать, что запрос должен получить за
+один раз все данные из одной таблицы (т.к. нет join). Поэтому сначала
+проектируются все возможные запросы, а затем под них создаются таблицы.
+Таким образом в Cassandra создание структуры БД начинается с определения
+запросов.
+
+\paragraph{ОПТИМАЛЬНОЕ ХРАНЕНИЕ}
+
+В реляционных базах редко можно встретить рекомендации к структуре
+БД для оптимального хранения и чтения данных. Чаще всего никто не заботится
+об этом. В распределенных системах дело обстоит иначе, т.к. данные
+располагаются на нескольких узлах, более высокую производительно будет
+демонстрировать тот запрос, который отдает данные с одной ноды. Таким
+образом, желательно располагать данные так, чтобы данные возвращались из
+одной ноды.
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Создание кластера на 3 узла с помощью Docker Compose}
+
+В первой части практики необходимо составить docker-compose.yml.
+Требования, предъявляемые к кластеру:
+\begin{itemize}
+	\item 3 сервиса: cassandra-seed-bondar, cassandra-node-bondar\_1
+		, cassandra-node-bondar\_2
+	\item Для каждого сервиса изменить (использовать) следующие
+	стандартные переменные в environment:
+	\begin{itemize}
+		\item CASSANDRA\_CLUSTER\_NAME
+		\item CASSANDRA\_ENDPOINT\_SNITCH
+		\item CASSANDRA\_DC
+	\end{itemize}
+	\item Узлы cassandra-seed-\ldots и cassandra-node-\ldots1 должны
+		находиться в одинаковых датацентрах
+	\item Для cassandra-node-\ldots1 и cassandra-node-\ldots2 добавить
+		настройку depends\_on в значении которой указать cassandra-seed-\ldots
+	\item Создать собственный volume для каждого сервиса чтобы было проще
+		искать данные
+		(пример \texttt{"cassandra\_data\_seed:/var/lib/cassandra"})
+	\item Открыть порты для каждого сервиса (пример 19042:9042)
+	\item Для главного узла cassandra-seed-*фамилия студента*
+		необходимо написать в environment\texttt{AUTO\_BOOTSTRAP=false} 
+\end{itemize}
+
+\lstinputlisting[language=xml]{./4/code/docker-compose.yml}
+
+Запустим его (рис. \ref{fig:docker:compouse}).
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-26-25}
+	\caption{Запуск Docker compouse}
+	\label{fig:docker:compouse}
+\end{image}
+
+\section{Ключи в Cassandra}
+
+Для начала подключимся к любому из контейнеру.
+
+\begin{verbatim}
+	docker exec -it cas1 cqlsh
+\end{verbatim}
+
+Создадим пространство ключей:
+
+\begin{verbatim}
+	CREATE KEYSPACE learn_cassandra WITH REPLICATION = {
+	'class' : 'NetworkTopologyStrategy',
+	'datacenter1' : 2
+	};
+\end{verbatim}
+
+Создадим таблицу:
+
+\begin{verbatim}
+CREATE TABLE learn_cassandra.users_by_country (
+	country text,
+	user_email text,
+	first_name text,
+	last_name text,
+	age smallint,
+	PRIMARY KEY ((country), user_email)
+);
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-26-25}
+	\caption{Содание KEYSPACE и таблицы users\_by\_country}
+	\label{fig:keyspace}
+\end{image}
+
+Давайте наполним таблицу некоторыми данными
+
+\begin{verbatim}
+INSERT INTO learn_cassandra.users_by_country
+(country,user_email,first_name,last_name,age)
+ VALUES('US', 'john@email.com', 'John','Wick',55);
+INSERT INTO learn_cassandra.users_by_country
+(country,user_email,first_name,last_name,age)
+ VALUES('UK', 'peter@email.com', 'Peter','Clark',65);
+INSERT INTO learn_cassandra.users_by_country
+(country,user_email,first_name,last_name,age)
+ VALUES('UK', 'bob@email.com', 'Bob','Sandler',23);
+INSERT INTO learn_cassandra.users_by_country
+(country,user_email,first_name,last_name,age)
+ VALUES('UK', 'alice@email.com', 'Alice','Brown',26);
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-30-05}
+	\caption{Заполнение таблицы users\_by\_country}
+	\label{fig:insert:users-by-country}
+\end{image}
+
+Давайте создадим еще одну таблицу и заполним их записями.
+Раздел будет определяться только столбцом user\_email.
+
+\begin{verbatim}
+CREATE TABLE learn_cassandra.users_by_email (
+ user_email text,
+ country text,
+ first_name text,
+ last_name text,
+ age smallint,
+ PRIMARY KEY (user_email)
+);
+INSERT INTO learn_cassandra.users_by_email (user_email,
+country,first_name,last_name,age)
+ VALUES('john@email.com', 'US', 'John','Wick',55);
+INSERT INTO learn_cassandra.users_by_email
+(user_email,country,first_name,last_name,age)
+ VALUES('peter@email.com', 'UK', 'Peter','Clark',65);
+INSERT INTO learn_cassandra.users_by_email
+(user_email,country,first_name,last_name,age)
+ VALUES('bob@email.com', 'UK', 'Bob','Sandler',23);
+INSERT INTO learn_cassandra.users_by_email
+(user_email,country,first_name,last_name,age)
+ VALUES('alice@email.com', 'UK', 'Alice','Brown',26);
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-31-15}
+	\caption{Создание и заполнение таблицы users\_by\_email}
+	\label{fig:table:users-by-email}
+\end{image}
+
+Кассандра старается избегать вредных запросов.
+Если вы хотите выполнить фильтрацию по столбцу,
+который не является ключом раздела, вам необходимо это явно указать,
+как показано в следующей команде:
+
+\begin{verbatim}
+SELECT * FROM learn_cassandra.users_by_email WHERE age=26 ALLOW FILTERING;
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-32-00}
+	\caption{Фильтрация по столбцу, который не является ключом раздела}
+	\label{fig:filter:not-key}
+\end{image}
+
+\section{Согласованность}
+
+Мы устанавливали коэффициент репликации равным 2.
+Таким образом, можно использовать уровень согласованности ALL или TWO.
+Для выбора уровня согласованности пропишем команды,
+а дальше получим данные из БД.
+
+\begin{verbatim}
+CONSISTENCY ALL;
+SELECT * FROM learn_cassandra.users_by_country WHERE country='US';
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-32-41}
+	\caption{Выбор уровня согласованности и вывод данных}
+	\label{fig:consistency:all}
+\end{image}
+
+Если высокая согласованность не важна, то можно прописать уровень
+согласованности, равный 1.
+За счет этого повышается скорость обработки запросов
+
+\begin{verbatim}
+CONSISTENCY ONE;
+SELECT * FROM learn_cassandra.users_by_country WHERE country='US';
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-33-13}
+	\caption{Выбор уровня согласованности и вывод данных}
+	\label{fig:consistency:one}
+\end{image}
+
+Основой для хранения данных являются так называемые SSTables.\par
+SSTables --- это неизменяемые файлы данных, которые Cassandra использует для
+сохранения данных на диске.\par
+Вы можете задать различные стратегии для таблицы, которые определяют,
+как данные должны быть объединены и сжаты. Эти стратегии влияют на
+производительность чтения и записи:
+
+\begin{itemize}
+	\item SizeTieredCompactionStrategy используется по умолчанию и особенно
+		эффективна, если у вас больше операций записи, чем операций чтения.
+	\item LeveledCompactionStrategy оптимизирует чтение вместо записи. Эта
+		оптимизация может быть дорогостоящей
+		и должна быть тщательно опробована в продакшене.
+	\item TimeWindowCompactionStrategy предназначена для данных временных
+		рядов.
+\end{itemize}
+
+По умолчанию в таблицах используется SizeTieredCompactionStrategy.
+Проверим это командой:
+
+\begin{verbatim}
+DESCRIBE TABLE learn_cassandra.users_by_country;
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-33-43}
+	\caption{Вывод информации о таблицы}
+	\label{fig:info}
+\end{image}
+
+В таблице users\_by\_country можно определить age как еще один столбец
+кластеризации для сортировки данных.
+
+\begin{verbatim}
+CREATE TABLE learn_cassandra.users_by_country_sorted_by_age_asc (
+ country text,
+ user_email text,
+ first_name text,
+ last_name text,
+ age smallint,
+ PRIMARY KEY ((country), age, user_email)) WITH CLUSTERING ORDER BY (age ASC);
+\end{verbatim}
+
+Вставьте данные в таблицу и удостоверьтесь, что записи придут в порядке
+увеличения возраста
+
+\begin{verbatim}
+INSERT INTO learn_cassandra.users_by_country_sorted_by_age_asc
+(country,user_email,first_name,last_name,age) VALUES('US','john@email.com',
+'John','Wick',10);
+INSERT INTO learn_cassandra.users_by_country_sorted_by_age_asc
+(country,user_email,first_name,last_name,age) VALUES('UK', 'peter@email.com',
+'Peter','Clark',30);
+INSERT INTO learn_cassandra.users_by_country_sorted_by_age_asc
+(country,user_email,first_name,last_name,age) VALUES('UK', 'bob@email.com',
+'Bob','Sandler',20);
+INSERT INTO learn_cassandra.users_by_country_sorted_by_age_asc
+(country,user_email,first_name,last_name,age) VALUES('UK', 'alice@email.com',
+'Alice','Brown',40);
+SELECT * FROM learn_cassandra.users_by_country_sorted_by_age_asc;
+\end{verbatim}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 11-36-33}
+	\caption{Создание и заполнение таблицы, а также вывод данных}
+	\label{fig:filter:key}
+\end{image}
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+В результате практической работы были изучены
+особенности при создании таблиц Cassandra,
+ключи и согласованность в Cassandra.\par
+Также изучили стратегии для таблиц, которые определяют,
+как данные должны быть объединены и сжаты.
+

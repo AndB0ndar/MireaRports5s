@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+  cassandra-seed-bondar:
+    image: cassandra:latest
+    container_name: cas1
+    volumes:
+      - /var/lib/cassandra
+    ports:
+      - "19042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=abondar
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - AUTO_BOOTSTRAP=false
+    networks:
+      - cassandra-network
+
+  cassandra-node-bondar_1:
+    image: cassandra:latest
+    container_name: cas2
+    depends_on: [cassandra-seed-bondar]
+    ports:
+      - "19043:9042"
+    environment:
+      - CASSANDRA_SEEDS=cas1
+      - CASSANDRA_CLUSTER_NAME=abondar
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    networks:
+      - cassandra-network
+    volumes:
+      - /var/lib/cassandra
+
+  cassandra-node-bondar_2:
+    image: cassandra:latest
+    container_name: cas3
+    depends_on: [cassandra-seed-bondar]
+    ports:
+      - "19044:9042"
+    environment:
+      - CASSANDRA_SEEDS=cas1
+      - CASSANDRA_CLUSTER_NAME=abondar
+      - CASSANDRA_DC=datacenter2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    networks:
+      - cassandra-network
+    volumes:
+      - /var/lib/cassandra
+
+networks:
+  cassandra-network:
+    driver: bridge
+
