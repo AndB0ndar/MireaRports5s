@@ -1,0 +1,177 @@
+\section{Построение сети и проверка связи}
+
+\subsection{Произведите базовую настройку маршрутизаторов}
+
+\begin{verbatim}
+no ip domain lookup
+hostname R2_BONDAR
+
+/* R1 */
+interface vlan 1
+no shutdown
+interface g 0/1
+no shutdown
+ip address 192.168.1.1 255.255.255.0
+interface se 0/0/0
+no shutdown
+ip address 10.1.1.1 255.255.255.252
+clock rate 128000
+/* R1 */
+
+/* R2 */
+interface se 0/0/0
+no shutdown
+ip address 10.1.1.2 255.255.255.252
+clock rate 128000
+interface se 0/0/1
+no shutdown
+ip address 10.2.2.2 255.255.255.252
+clock rate 128000
+interface lo1
+no shutdown
+ip address 209.165.203.225 255.255.255.224
+/* R2 */
+
+/* R3 */
+interface vlan 1
+no shutdown
+interface g 0/1
+no shutdown
+ip address 192.168.1.3 255.255.255.0
+interface se 0/0/1
+no shutdown
+ip address 10.2.2.1 255.255.255.252
+clock rate 128000
+/* R3 */
+
+line console 0
+password cisco
+login
+logging synchronous
+line vty 0 4
+password cisco
+login
+logging synchronous
+exit
+enable secret class
+end
+copy running-config startup-config
+\end{verbatim}
+
+\subsection{Настройте базовые параметры каждого коммутатора}
+
+\begin{verbatim}
+no ip domain lookup
+hostname S1
+enable secret class
+
+/* S1 */
+ip default-gateway 192.168.1.1
+interface vlan 1
+no shutdown
+ip address 192.168.1.11 255.255.255.0
+/* S1 */
+
+/* S3 */
+ip default-gateway 192.168.1.3
+interface vlan 1
+no shutdown
+ip address 192.168.1.13 255.255.255.0
+/* S3 */
+
+line console 0
+password cisco
+login
+logging synchronous
+line vty 0 4
+password cisco
+login
+logging synchronous
+exit
+end
+copy running-config startup-config
+\end{verbatim}
+
+\subsection{Проверьте подключение между PC-A и PC-C}
+
+Отправьте ping-запрос с компьютера PC-A на компьютер PC-C.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-25 21-40-09}
+	\caption{Выполнение эхо-запросов}
+\end{image}
+
+\textbf{Удалось липолучить ответ?}
+
+Да
+
+\subsection{Настройте маршрутизацию}
+
+Настройте RIP версии 2 на всех маршрутизаторах.
+Добавьте в процесс RIP все сети, кроме 209.165.203.224/27.
+
+\begin{verbatim}
+config t
+router rip
+version 2
+no auto-summary
+do sh ip route connected
+network 192.168.1.0
+network 10.0.0.0
+\end{verbatim}
+
+Настройте маршрут по умолчанию на маршрутизаторе R2\_ФАМИЛИЯ
+с использованием Lo1 в качестве интерфейса выхода в сеть 209.165.203.224/27.
+
+\begin{verbatim}
+ip route 0.0.0.0 0.0.0.0 loopback 1
+\end{verbatim}
+
+На маршрутизаторе R2\_ФАМИЛИЯ используйте следующие команды
+для перераспределения маршрутапо умолчанию в процесс RIP.
+
+\begin{verbatim}
+router rip
+default-information originate
+\end{verbatim}
+
+\subsection{Проверьте подключение}
+
+Необходимо получить ответ на ping-запросы с компьютера PC-A
+от каждого интерфейса на маршрутизаторах R1, R2\_ФАМИЛИЯ и R3,
+а также от компьютера PC-C.
+
+
+\textbf{Удалось ли получить всеответы?}
+
+Необходимо получить ответ на ping-запросы с компьютера PC-C
+от каждого интерфейса на маршрутизаторах R1, R2\_ФАМИЛИЯ и R3,
+а также от компьютера PC-A.
+
+\textbf{Удалось ли получить все ответы?}
+
+Да
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-25 22-29-53}
+	\caption{Выполнение эхо-запросов}
+\end{image}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-25 22-41-03}
+	\caption{Выполнение эхо-запросов}
+\end{image}
+
+\section{Настройка обеспечения избыточности на первом хопе
+с помощью HSRP}
+
+
+
+
+
+
+
+
+
+
+

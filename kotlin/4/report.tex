@@ -1,0 +1,245 @@
+\section*{\LARGE Цель практической работы}
+\addcontentsline{toc}{section}{Цель практической работы}
+
+\textbf{Задание 1}
+
+\begin{enumerate}
+	\item Вынести повторяющиеся атрибуты в стили.
+	\item Добавить новые шрифты в экраны.
+	\item Адаптировать интерфейс под темную тему.
+\end{enumerate}
+
+\textbf{Задание 2}
+
+Реализовать экран \textbf{Поиск} без выполнения поискового запроса.
+Экран должен содержать заголовок, кнопку "<Назад"> и поле ввода поискового
+запроса с кнопкой "<Очистить">.
+Обязательные условия:
+
+\begin{enumerate}
+	\item Нажатие кнопки "<Назад"> возвращает пользователя на предыдущий экран.
+	\item В поле ввода поискового запроса отображается подсказка, если поле
+		ввода пустое.
+	\item При нажатии на поле ввода появляется клавиатура.
+	\item Если в поле ввода поискового запроса введён какой-то текст, то
+		отображается кнопка "<Очистить">.
+	\item Если в поле ввода поискового запроса нет никакого текста, то кнопка
+		"<Очистить"> не отображается.
+	\item Нажатие на кнопку "<Очистить"> удаляет текст в поле ввода поискового
+		запроса и скрывает клавиатуру.
+\end{enumerate}
+
+\textbf{Задание 3}
+
+Реализовать сохранение текста поискового запроса в жизненном цикле, то
+есть если в поле ввода поискового запроса есть какой-то текст, то при
+повороте устройства в ландшафтную ориентацию и обратно текст в поле
+ввода поискового запроса не исчезает.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Стили}
+
+При разработке приложений для платформы Android важно не только писать
+эффективный код на Java или Kotlin, но и уделять внимание переиспользованию
+кода и ресурсов. Одним из инструментов, способствующих этому, являются стили.
+Стиль представляет собой специальный вид ресурсов, который содержит
+определенный набор значений атрибутов для View-элемента.
+Описывается он в XML-формате и позволяет задать общие характеристики
+для нескольких элементов интерфейса.\par
+Для создания стилей в проекте Android Studio необходимо создать
+новый ресурсный файл в папке values. Назовите его, например, styles.xml.
+Внутри этого файла определите объекты стилей, используя следующий формат:
+
+\begin{lstlisting}[language=XML]
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.MyTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:editTextStyle">@style/EditTextStyle</item>
+        <item name="android:buttonStyle">@style/ButtonStyle</item>
+        <item name="android:fontFamily">@font/font</item>
+    </style>
+    <style name="EditTextStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/edittext_bg</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textColorHint">@color/black</item>
+        <item name="android:backgroundTint">@color/light_blue</item>
+        <item name="android:layout_height">@dimen/edit_text_height</item>
+    </style>
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@color/blue</item>
+    </style>
+    <style name="MyTheme" parent="Base.MyTheme" />
+</resources>
+\end{lstlisting}
+
+И чтобы использовать стиль с указанными значениями в вёрстке,
+достаточно сделать следующее:
+
+\begin{lstlisting}[language=XML]
+<application
+	android:theme="@style/MyTheme"
+	.../>
+	...
+</application>
+\end{lstlisting}
+
+\section{Шрифт}
+
+В приложениях Android, помимо функциональных аспектов,
+важно также уделять внимание визуальному оформлению, включая выбор шрифтов.
+По умолчанию Android Studio использует удобный для чтения шрифт,
+но для создания приложений с уникальным стилем часто требуется использование
+специальных шрифтов, особенно при разработке для крупных компаний
+с собственным брендом и требованиями к визуальному оформлению.\par
+Для добавления пользовательских шрифтов в приложение необходимо создать
+специальную ресурсную директорию. После этого, файлы шрифтов следует
+скопировать в созданную папку. Обратите внимание,
+что в именах ресурсных файлов не допускаются пробелы и дефисы.
+Используйте в качестве разделителя подчёркивание.
+
+\begin{lstlisting}[language=XML]
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:font="@font/font"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        />
+</font-family>
+\end{lstlisting}
+
+Чтобы применить добавленные шрифты для View-элементов,
+необходимо указать имя шрифта в качестве значения атрибута fontFamily
+в разметке XML соответствующего элемента.
+
+\begin{lstlisting}[language=XML]
+<style name="Base.MyTheme" parent="Theme.Material3.DayNight.NoActionBar">
+	...
+	<item name="android:fontFamily">@font/font</item>
+</style>
+\end{lstlisting}
+
+Настройка шрифтов для View-элементов позволяет создавать приложения
+с индивидуальным стилем и уникальным визуальным оформлением.
+Путем добавления пользовательских шрифтов в проект и использования
+их в разметке XML можно значительно улучшить визуальное впечатление
+от приложения.
+
+\section{Темная тема}
+
+Чтобы поддержать тёмную тему, необходимо настроить соответствующие ресурсы.
+Создайте или найдите папку values-night в папке res
+и скопируйте туда файл themes.xml из values.\par
+В файле themes.xml определяются стили и цвета для ночного режима,
+которые будут использоваться в приложении.
+Например, можно задать цвета элементов интерфейса и статус-бара.
+
+\begin{lstlisting}[language=XML]
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.MyTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:editTextStyle">@style/EditTextStyle</item>
+        <item name="android:buttonStyle">@style/ButtonStyle</item>
+        <item name="android:fontFamily">@font/font</item>
+    </style>
+    <style name="EditTextStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/edittext_bg</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
+        <item name="android:backgroundTint">@color/light_blue</item>
+        <item name="android:layout_height">@dimen/edit_text_height</item>
+    </style>
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@color/blue</item>
+    </style>
+    <style name="MyTheme" parent="Base.MyTheme" />
+</resources>
+\end{lstlisting}
+
+Чтобы увидеть, как приложение выглядит в ночной теме,
+воспользуйтесь окном предпросмотра в Android Studio.
+Выберите режим Night в верхней части окна предпросмотра.
+
+\section{Реализация "<Поиска">}
+
+Данный экран является ключевым для обеспечения удобства использования
+приложения и обеспечения интуитивно понятного интерфейса для пользователей.
+
+Листнинг реализации обработки виджетов:
+
+\begin{lstlisting}[language=Java]
+binding.editTextSearch.addTextChangedListener(object : TextWatcher {
+	override fun beforeTextChanged(
+		s: CharSequence?, start: Int, count: Int, after: Int
+		) {}
+	override fun onTextChanged(
+		s: CharSequence?, start: Int, before: Int, count: Int
+		) {
+		if (s.isNullOrEmpty()) {
+			binding.buttonClear.visibility = View.INVISIBLE
+		} else {
+			binding.buttonClear.visibility = View.VISIBLE
+		}
+	}
+	override fun afterTextChanged(s: Editable?) {
+	}
+})
+binding.buttonClear.setOnClickListener {
+	binding.editTextSearch.text.clear()
+}
+\end{lstlisting}
+
+\section{Хранение данных}
+
+Чтобы не потерять данные при пересоздании, у activity существует
+Instance State --- изначальное состояние. Для сохранения и получения
+состояния в жизненном цикле activity есть два метода: onSaveInstanceState() и
+onRestoreInstanceState().
+
+\begin{lstlisting}[language=Java]
+companion object {
+	const val EDIT_TEXT_STATE_KEY = "EDIT_TEXT_STATE_KEY"
+	const val SEARCH_DEF = ""
+}
+override fun onSaveInstanceState(outState: Bundle) {
+	super.onSaveInstanceState(outState)
+	outState.putString(
+		EDIT_TEXT_STATE_KEY
+		, binding.editTextSearch.text.toString()
+		)
+}
+override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+	super.onRestoreInstanceState(savedInstanceState)
+	val editTextState = savedInstanceState.getString(
+		EDIT_TEXT_STATE_KEY, SEARCH_DEF
+		)
+	binding.editTextSearch.setText(editTextState)
+}
+\end{lstlisting}
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+
+Внедрение светлой и тёмной темы в Android позволяет автоматически переключать
+приложения между ними. Для этого нужно настроить соответствующие ресурсы.
+Это позволяет улучшить пользовательский опыт
+и адаптировать интерфейс к различным условиям освещения.\par
+Сохранение текста поисковых запросов между сеансами использования
+приложения повышает удобство для пользователей,
+а создание экрана поиска без выполнения запроса позволяет пользователям
+изучать интерфейс поиска до его фактического использования.
+Эти аспекты важны для создания качественного
+и удобного в использовании приложения.
+
