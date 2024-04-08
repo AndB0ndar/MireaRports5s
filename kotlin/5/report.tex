@@ -1,0 +1,304 @@
+\section*{\LARGE Цель практической работы}
+\addcontentsline{toc}{section}{Цель практической работы}
+
+\textbf{Задание 1}
+
+Если в приложении для курсовой работы не предполагается подключение API,
+необходимо подготовить «приложение-заглушку» для демонстрации работы
+API.
+
+\textbf{Задание 2}
+
+Подключить к странице поиска любую открытую API. Ссылку на список
+открытых API можно найти в СДО. Реализовать корректный поиск согласно
+теме проекта. Отображение результатов поиска должно быть реализовано с
+помощью RecycleView.
+
+\textbf{Задание 3}
+
+Реализовать плейсхолдеры:
+
+\begin{enumerate}
+	\item Если нет результатов поиска.
+	\item Если поисковый запрос завершился неудачно, при этом на данном
+		плейсхолдере должна быть размещена кнопка «Обновить».
+\end{enumerate}
+
+\textbf{Задание 4}
+
+Если на плейсхолдере присутствует кнопка «Обновить», то необходимо
+реализовать повторное отправление последнего запроса при нажатии на нее.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Retrofit}
+
+Retrofit — это библиотека для упрощённого клиент-серверного
+взаимодействия через REST API. Её особенность --- простота в использовании
+HTTP-запросов на основе JSON или других протоколов.\par
+Если мобильное приложение создаётся как совершенно новый продукт с
+собственной инфраструктурой, то за создание серверной части отвечает
+backend-команда. В таком случае API уникально для конкретного приложения
+и вся информация о нём хранится у backend-разработчиков. Часто возникает
+необходимость добавить в приложение дополнительные трудозатратные
+возможности, которые также требуют участия сервера. В таких случаях
+наиболее выгодное и правильное решение --- использовать API готовых
+продуктов с нужными функциями.\par
+
+Класс сервис для реализации запроса к API:
+\begin{lstlisting}[language=Java]
+interface SubjectService {
+    @GET("groups/certain")
+    fun getGroupData(@Query("name") groupName: String?): Call<List<GroupResponse?>>?
+}
+\end{lstlisting}
+
+Класс клиент для создания объкта Retrofit:
+\begin{lstlisting}[language=Java]
+object RetrofitClient {
+    private const val BASE_URL = "https://mirea.xyz/api/v1.3/"
+
+    private val retrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    fun getRetrofitInstance(): Retrofit {
+        return retrofit
+    }
+}
+\end{lstlisting}
+
+Класс код отправки запроса и получение данных из API:
+\begin{lstlisting}[language=Java]
+    private val apiService: SubjectService = RetrofitClient.getRetrofitInstance().create(SubjectService::class.java)
+    private val groupLiveData: MutableLiveData<List<GroupResponse?>> = MutableLiveData()
+    private val searchText: MutableLiveData<String> = MutableLiveData()
+    private val errorLiveData: MutableLiveData<String> = MutableLiveData()
+
+    fun getError(): LiveData<String> {
+        return errorLiveData
+    }
+    fun getGroupData(groupName: String?): LiveData<List<GroupResponse?>> {
+        apiService.getGroupData(groupName)?.enqueue(object : Callback<List<GroupResponse?>> {
+            override fun onResponse(
+                call: Call<List<GroupResponse?>>,
+                response: Response<List<GroupResponse?>>
+            ) {
+                if (response.isSuccessful) {
+                    groupLiveData.postValue(response.body())
+                } else {
+                    Log.d("HomeViewModel", "Response ERROR: ${response.code()} - ${response.message()}")
+                    errorLiveData.postValue(response.message())
+                }
+            }
+            override fun onFailure(call: Call<List<GroupResponse?>>, t: Throwable) {
+                Log.d("HomeViewModel", "onFailure: " + t.message)
+                errorLiveData.postValue(t.message)
+            }
+        })
+        return groupLiveData
+    }
+\end{lstlisting}
+
+\section{Плейсхолдеры}
+
+Для реализации плейсхолдеров в приложении были созданы соответствующие макеты
+XML. Плейсхолдер для отсутствия результатов поиска содержит текстовое поле
+с сообщением о том, что результаты не найдены.
+Плейсхолдер для неудачного поискового запроса включает в
+себя текстовое поле с сообщением об ошибке и кнопку "Обновить".
+В активности были добавлены обработчики событий для отображения
+соответствующих плейсхолдеров в зависимости от результатов поиска
+и статуса запроса.
+
+Код плейсхолдеров:
+\begin{lstlisting}[language=XML]
+<TextView
+	android:id="@+id/textViewError"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Result is empty"
+	android:textSize="24sp"
+	android:textStyle="bold"
+	android:visibility="invisible"
+	app:layout_constraintBottom_toTopOf="@+id/buttonAddQueue"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toBottomOf="@+id/buttonClear"/>
+
+<RelativeLayout
+	android:id="@+id/layoutError"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_centerHorizontal="true"
+	android:visibility="invisible"
+	app:layout_constraintBottom_toTopOf="@+id/buttonAddQueue"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toBottomOf="@+id/buttonClear">
+
+	<TextView
+		android:id="@+id/textViewError0"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Error" />
+
+	<Button
+		android:id="@+id/buttonRetry"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:backgroundTint="@color/blue"
+		android:layout_below="@id/textViewError0"
+		android:text="Retry" />
+</RelativeLayout>
+\end{lstlisting}
+
+Код работы с API в активити:
+\begin{lstlisting}[language=Java]
+override fun onCreate(savedInstanceState: Bundle?) {
+	super.onCreate(savedInstanceState)
+	binding = ActivityHomeBinding.inflate(layoutInflater)
+	setContentView(binding.root)
+	groupViewModel = ViewModelProvider(this)[HomeViewModel::class.java]
+
+
+	binding.editTextSearch.addTextChangedListener(object : TextWatcher {
+		override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+		}
+		override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+			if (s.isNullOrEmpty()) {
+				binding.buttonClear.visibility = View.GONE
+				queueAdapter.filter("")
+			} else {
+				binding.buttonClear.visibility = View.VISIBLE
+				queueAdapter.filter(s.toString().trim())
+			}
+		}
+		override fun afterTextChanged(s: Editable?) {
+		}
+	})
+
+	binding.buttonClear.setOnClickListener {
+		binding.editTextSearch.text.clear()
+	}
+	binding.buttonRetry.setOnClickListener {
+		fetchQueueData()
+	}
+
+	binding.recyclerViewQueueList.layoutManager = LinearLayoutManager(this)
+	queueAdapter = QueueListAdapter(queueList)
+	binding.recyclerViewQueueList.adapter = queueAdapter
+	queueAdapter.setOnClickListener(object : QueueListAdapter.OnClickListener {
+		override fun onClick(position: Int) {
+			navigateToQueue()
+		}
+	})
+
+	fetchQueueData()
+
+	binding.buttonAddQueue.setOnClickListener {
+		navigateToAddQueue()
+	}
+	binding.imageViewProfile.setOnClickListener {
+		navigateToProfile()
+	}
+}
+
+private fun fetchThisWeekLessons(groupResponseList: List<GroupResponse?>): List<ScheduleItem> {
+	val thisWeekLessons = mutableListOf<ScheduleItem>()
+	val isEvenWeek = Calendar.getInstance()
+		.get(Calendar.WEEK_OF_YEAR) \% 2 == 0
+
+	Log.d("HomeActivity", "isEvenWeek " + isEvenWeek)
+
+	for (groupResponse in groupResponseList) {
+		groupResponse?.let {
+			for (daySchedule in it.schedule) {
+				val lessons = if (isEvenWeek) daySchedule.even 
+					else daySchedule.odd
+				for (lessonList in lessons) {
+					for (lesson in lessonList) {
+						if (lesson.weeks.isNullOrEmpty()
+								|| lesson.weeks.contains("1")) {
+							thisWeekLessons.add(lesson)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return thisWeekLessons
+}
+
+private fun fetchQueueData() {
+	Log.d("HomeActivity", "Response")
+	groupViewModel.getGroupData("ИКБ-06-21").observe(this, Observer { groupResponse ->
+		groupResponse?.let {
+			queueList.clear()
+			Log.d("HomeActivity", "START")
+			val thisWeekLessons = fetchThisWeekLessons(groupResponse)
+			for (lesson in thisWeekLessons) {
+				if (!queueList.contains(lesson.name)) {
+					Log.d("HomeActivity", lesson.name)
+					queueList.add(lesson.name)
+				}
+			}
+			Log.d("HomeActivity", queueList.size.toString())
+
+			queueList.add("example item")
+
+			queueAdapter.notifyDataSetChanged()
+			queueAdapter.filter("")
+			if (queueList.isEmpty())
+				binding.textViewError.visibility = View.VISIBLE
+			else
+				binding.textViewError.visibility = View.GONE
+		}
+	})
+	groupViewModel.getError().observe(this, Observer { error ->
+		if (error.isNullOrEmpty()) {
+			Log.d("HomeActivity", "groupResponse ERROR")
+			binding.recyclerViewQueueList.visibility = View.GONE
+			binding.layoutError.visibility = View.VISIBLE
+		}
+	})
+}
+\end{lstlisting}
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+
+В результате выполнения практической работы было реализовано приложение
+с использованием открытого API для поиска и отображения данных. 
+
+В ходе работы были выполнены следующие задания:
+
+\begin{enumerate}
+    \item Разработана "приложение-заглушка" для демонстрации работы
+		приложения в случае отсутствия подключения к реальному API.
+    \item Подключено открытое API к странице поиска,
+		обеспечив корректный поиск данных, соответствующих теме проекта,
+		и их отображение с использованием RecycleView.
+    \item Реализованы плейсхолдеры для двух сценариев:
+		отсутствия результатов поиска и неудачного завершения поискового
+		запроса. Кнопка "Обновить" добавлена на плейсхолдер
+		для повторной отправки последнего запроса.
+    \item Добавлена функциональность повторной отправки запроса
+		при нажатии на кнопку "Обновить" на плейсхолдере,
+		обеспечивая удобство и интуитивную понятность для пользователей.
+\end{enumerate}
+
+Таким образом, выполнение практической работы позволило ознакомиться
+с процессом работы с API, реализацией поиска и отображением данных,
+а также с важной концепцией плейсхолдеров для обработки различных сценариев
+взаимодействия с пользователем.
+

@@ -32,21 +32,21 @@ services:
     volumes:
       - /var/lib/cassandra
 
-  cassandra-node-bondar_2:
-    image: cassandra:latest
-    container_name: cas3
-    depends_on: [cassandra-seed-bondar]
-    ports:
-      - "19044:9042"
-    environment:
-      - CASSANDRA_SEEDS=cas1
-      - CASSANDRA_CLUSTER_NAME=abondar
-      - CASSANDRA_DC=datacenter2
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-    networks:
-      - cassandra-network
-    volumes:
-      - /var/lib/cassandra
+        #cassandra-node-bondar_2:
+        #image: cassandra:latest
+        #container_name: cas3
+        #depends_on: [cassandra-seed-bondar]
+        #ports:
+        #- "19044:9042"
+        #environment:
+        #- CASSANDRA_SEEDS=cas1
+        #- CASSANDRA_CLUSTER_NAME=abondar
+        #- CASSANDRA_DC=datacenter2
+        #- CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+        #networks:
+        #- cassandra-network
+        #volumes:
+        #- /var/lib/cassandra
 
 networks:
   cassandra-network:
