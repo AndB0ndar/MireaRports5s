@@ -1,0 +1,90 @@
+\section{Настройка R2}
+
+\begin{verbatim}
+// R2
+hostname Zachet
+no ip domain lookup
+line console 0
+password console
+login
+line vty 0 4
+password Telnet
+login
+enable secret privilege
+// зашифруте все пароли
+service password-encryption
+banner motd #Warning#
+\end{verbatim}
+
+\section{Настройка S0}
+
+\begin{verbatim}
+// S0
+interface range f0/3-9, f0/12-24, g0/1-2
+shutdown
+
+interface range f0/1-2, f0/10-11
+switchport mode access
+no shutdown  // ?
+
+interface vlan 14
+no shutdown
+ip address 192.168.0.20 255.255.255.248
+
+interface range f0/1-2, f0/10-11
+switchport mode access
+switchport port-security
+switchport port-security maximum 5
+switchport port-security violation protect
+\end{verbatim}
+
+\section{Trunk}
+
+\begin{verbatim}
+// S0, R2
+interface range f0/1-2, f0/10-11
+switchport mode trunk
+switchport trunk native vlan 80
+switchport trunk allowed vlan 10,14
+\end{verbatim}
+
+\section{Routet-on-a-Stick}
+
+https://itexamanswers.net/4-2-7-packet-tracer-configure-router-on-a-stick-inter-vlan-routing-instructions-answer.html
+
+(?)
+
+\section{Статическая маршрутизация}
+
+(?)
+
+\section{HSRPv2}
+
+\begin{verbatim}
+// R2
+config t
+router rip
+version 2
+no auto-summary
+do sh ip route connected
+network 192.168.0.0
+network 10.0.0.0
+ip route 0.0.0.0 0.0.0.0 loopback 1
+router rip
+default-information originate
+\end{verbatim}
+
+\begin{verbatim}
+// R0
+interface g0/0
+standby version 2
+standby 1 ip 192.168.0.63 (?)
+standby 1 priority 150
+standby 1 preempt
+
+// R1
+interface g0/0
+standby version 2
+standby 1 ip 192.168.1.254
+\end{verbatim}
+
