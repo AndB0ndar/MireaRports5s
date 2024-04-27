@@ -1,0 +1,288 @@
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Данные записываются в Cassandra таким образом, чтобы обеспечить
+полную надежность и высокую производительность. Но в связи с тем, что данная
+СУБД является распределенной, уходит некоторое время на обработку запросов
+и передачу информации между узлами. Время обработки запросов называется
+задержкой. Причинами больших "<задержек записи"> или \textit{"write latency"}
+(при выполнении операций вставки и обновления) могут быть следующие факторы:
+
+\begin{itemize}
+	\item Низкая скорость записи дисков, на которых расположена СУБД;
+	\item Большой размер батча;
+	\item Запись строки большого размера. В идеале размер строки не должен
+		превышать 1 мегабайта;
+	\item Сетевая задержка, когда пропускная способность сети низка;
+	\item Отсутствие свободных потоков для записи;
+	\item Загруженность центрального процессора;
+	\item Работа «сборщика мусора» (garbage collector).
+\end{itemize}
+
+Что касается "<задержки чтения"> или \textit{"read latency"},
+то тут гораздо больше возможных причин ее возникновения:
+
+\begin{itemize}
+	\item Большой размер раздела (partition). При создании таблиц в
+		Cassandra важно уметь создать правильный ключ раздела, чтобы разделы не
+		были слишком большими;
+	\item Плохой запрос. Сюда входит полное сканирование таблицы, поиск
+		по ключу, который не является ключом раздела (ALLOW FILTERING);
+	\item Количество затронутых sstable;
+	\item Использование в качестве ключей кластеризации слишком
+		уникальных (почта, номер телефона) или полей с малым количеством
+		возможных значений (пол);
+	\item Уровень согласованности. При большом уровне необходимо
+		дождаться ответа большего количества узлов;
+	\item Большое количество tombstone;
+	\item Большое количество записей в секунду.
+\end{itemize}
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Read latency и write latency}
+
+В данной практической работе работе будет рассматриваться система с
+открытым исходным кодом \textit{"Grafana"}, которая предоставляет функции
+аналитики и визуализации данных, которые получаются из настраиваемых
+источников и отображаются на панели (dashboard). Получать данные и хранить
+будет бесплатное ПО под названием \textit{"Prometheus"}. Использовать для
+визуализации данные статистики будет Grafana. В дальнейшем Grafana может
+помочь вам визуализировать не только данные, полученные из Cassandra, но и
+многих других источников.\par
+Необходимо скачать созданный преподавателем репозиторий
+и запустить 2 кластера, расположенных в 2 каталогах, с
+помощью команды, указанной ниже. Команду необходимо выполнить в каждой
+папке.
+
+\begin{lstlisting}[language=bash]
+docker-compose up -d
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 12-22-06}
+	\caption{Запуск Docker-Compouse}
+	\label{fig:docker:compouse}
+\end{image}
+
+\section{Настройка Grafana}
+
+Web-интерфейс Grafana расположен по адресу \texttt{localhost:3000}.
+Для входа необходимо использовать логин и пароль \textit{"admin"}.
+После этого нам необходимо добавить панель (dashboard).
+Для этого наводим на плюс в левой части экрана, выбираем \textit{"Import"}.\par
+Для данной практической работы будет использована панель
+\textit{"Cassandra Dashboard"}, взятая из открытых источников.
+Для импорта панели необходимо взять ID панели (в данном случае 12086)
+и вставить в поле для импорта.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 12-25-35}
+	\caption{Cassandra Dashboard}
+	\label{fig:dashboard:import}
+\end{image}
+
+Далее указываем в качестве источника Prometheus, а в интервале
+обновления прописываем \textit{"15s"}, после чего производим импорт панели.\par
+В данной панели пользователь может установить необходимые фильтры
+(необходимые датацентр, keyspace и таблица). Так как пока ничего не создано,
+можно выбрать только keyspace \textit{"system"}.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 12-35-03}
+	\caption{Настройка Dashboard}
+	\label{fig:dashboard:setting}
+\end{image}
+
+\section{Создание таблиц}
+
+Для начала нам необходимо создать таблицу, над которой мы будем
+производить манипуляции.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-03-23 12-37-30}
+	\caption{Создание таблиц}
+	\label{fig:keyspace}
+\end{image}
+
+После создания необходимо обновить страницу Grafana. Там
+автоматически будет выбран созданный keyspace.
+
+\section{Задержка при записи (Write latency)}
+
+Вам необходимо подключиться к кластеру, как это производилось в
+Практической работе \No1, и с помощью средств языка программирования Python
+реализовать однопоточную и многопоточную вставку множества данных в 
+таблицу.
+
+\begin{lstlisting}[language=Python]
+#!./venv/bin/python3
+
+from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
+from concurrent.futures import ThreadPoolExecutor
+from faker import Faker
+from time import sleep
+
+fake = Faker()
+contact_points = ['0.0.0.0']
+cassandra_port = 9100
+keyspace = 'learn_cassandra'
+table_name = 'users_by_country'
+
+cluster = Cluster(contact_points=contact_points)
+session = cluster.connect(keyspace)
+
+def insert_data(session):
+    insert_query = f"INSERT INTO {table_name}"
+    insert_query += " (country, user_email, first_name, last_name, age)"
+    insert_query += " VALUES"
+    country = fake.country()
+    country = country.replace("'", "_")
+    insert_query += f" (\'{country}\', \'{fake.email()}\'"
+    insert_query += f", \'{fake.first_name()}\', \'{fake.last_name()}\'"
+    insert_query += f", {fake.random_int(min=18, max=90)});"
+    session.execute(insert_query)
+
+def single_threaded_insert(session, num_rows):
+    for _ in range(num_rows):
+        insert_data(session)
+
+def multi_threaded_insert(session, num_rows, num_threads):
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        for _ in range(num_rows):
+            executor.submit(insert_data, session)
+
+if __name__ == "__main__":
+    num_rows = 100
+    num_threads = 4
+
+    single_threaded_insert(session, num_rows)
+
+    sleep(10)
+
+    multi_threaded_insert(session, num_rows, num_threads)
+
+    session.shutdown()
+    cluster.shutdown()
+\end{lstlisting}
+
+
+После записи вам необходимо узнать количество вставок в секунду и
+среднюю задержку, найдя графики Writes, Write Latency (95\%) и Write Latency
+(99\%) и отобразив это в отчете.\par
+Latency 95\% и 99\% указывают вам точку, в которой 95\% и 99\% вашего
+трафика испытывают задержку, меньшую, чем эти значения. Или, что еще более
+важно, это значит, что 5\% и 1\% вашего трафика испытывают задержку вне этого
+диапазона.
+
+\begin{image}
+	\includegrph{write}
+	\caption{График Write}
+	\label{fig:writing}
+\end{image}
+
+\begin{image}
+	\includegrph{write_l95}
+	\caption{График Write Latency 95\%}
+	\label{fig:write_l95}
+\end{image}
+
+\begin{image}
+	\includegrph{write_l99}
+	\caption{График Write Latency 99\%}
+	\label{fig:write_l99}
+\end{image}
+
+\section{Задержка при чтении (Read Latency)}
+
+Вам необходимо подключиться к кластеру и реализовать однопоточное и
+многопоточное чтения данных из таблицы. Изучите также зависимость задержки
+от количества потоков: 10, 25, 50, 100.\par
+После записи вам необходимо узнать количество чтений в секунду и
+среднюю задержку, найдя графики Reads, Read Latency (95\%) и Read Latency
+(99\%) и отобразив это в отчете. Для проверки задержки чтения используйте
+следующие заготовки. Возраст и страну укажите сами в соответствии со
+вставленными данными.
+
+Перпишем скрипт для записи на чтение:
+
+\begin{lstlisting}[language=Python]
+#!./venv/bin/python3
+
+from cassandra.cluster import Cluster
+from cassandra.auth import PlainTextAuthProvider
+from concurrent.futures import ThreadPoolExecutor
+from faker import Faker
+from time import sleep
+
+fake = Faker()
+contact_points = ['0.0.0.0']
+cassandra_port = 9100
+keyspace = 'learn_cassandra'
+table_name = 'users_by_country'
+
+cluster = Cluster(contact_points=contact_points)
+session = cluster.connect(keyspace)
+
+def single_threaded_read(session, query):
+    return session.execute(query)
+
+def multi_threaded_read(session, queries, num_threads):
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        for query in queries:
+            result = executor.submit(query)
+
+if __name__ == "__main__":
+    num_rows = 100
+    num_threads = 4
+
+    queries = [
+        "SELECT * FROM learn_cassandra.users_by_country;",
+        "SELECT * FROM learn_cassandra.users_by_country WHERE age=30 ALLOW FILTERING;",
+        "SELECT * FROM learn_cassandra.users_by_country WHERE country='USA';"
+    ]
+    thread_counts = [10, 25, 50, 100]
+
+    for query in queries:
+        print(single_threaded_read(session, query))
+	
+	sleep(10)
+
+    for thread_count in thread_counts:
+        print(f"read with {thread_count} thread")
+        multi_threaded_read(session, queries, thread_count)
+
+    session.shutdown()
+    cluster.shutdown()
+\end{lstlisting}
+
+\begin{image}
+	\includegrph{read}
+	\caption{График Read}
+	\label{fig:reading}
+\end{image}
+
+\begin{image}
+	\includegrph{read_l99}
+	\caption{График Read Latency 99\%}
+	\label{fig:read_l99}
+\end{image}
+
+\begin{image}
+	\includegrph{read_l95}
+	\caption{График Read Latency 95\%}
+	\label{fig:read_l95}
+\end{image}
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+В данной практической работе мы узнали, что в СУБД Cassandra,
+так как она является распределенной,
+уходит некоторое время на обработку запросов
+и передачу информации между узлами.
+Время обработки запросов называется задержкой
+
