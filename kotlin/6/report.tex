@@ -1,0 +1,333 @@
+\section*{\LARGE Цель практической работы}
+\addcontentsline{toc}{section}{Цель практической работы}
+
+\textbf{Задание 1}: Реализация переключателя темной темы
+
+\textbf{Задание 2}: Необходимо реализовать хранение истории поиска с помощью
+Shared Preferences.
+
+Обязательные условия:
+\begin{itemize}
+	\item При нажатии на поисковую строку пользователь должен видеть историю
+		поиска (при условии, что у пользователя непустая история и он не
+		очищал историю поиска).
+	\item В истории должно храниться не больше 10 элементов.
+	\item Нажатие на элемент в списке результатов поиска добавляет его в
+		историю.
+	\item Элементы хранятся в истории в порядке добавления (новые
+		отображаются в верхней части списка).
+	\item Нажатие на кнопку «Очистить историю» полностью очищает записи
+		истории поиска.
+\end{itemize}
+
+\textbf{Задание 3}: Реализовать автоматическое отправление поискового запроса,
+если пользователь не выполняет никаких действий в течении 2 секунд
+
+\textbf{Задание 4}: Реализовать отображение ProgressBar при выполнении
+поискового запроса.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Переключатель темной темы}
+
+Реализуйте переключатель с помощью элемента SwitchMaterial.
+В XMLфайле это выглядит так:
+
+\begin{lstlisting}[language=XML]
+<com.google.android.material.switchmaterial.SwitchMaterial
+	android:id="@+id/themeSwitcher"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginTop="@dimen/margin_large"
+	android:layout_marginHorizontal="60dp"
+	android:text="Темная тема"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toBottomOf="@+id/constraintLayout2" />
+\end{lstlisting}
+
+Для работы с переключателем необходим метод setOnCheckedChangeListener,
+применяемый к переключателю в коде:
+
+\begin{lstlisting}[language=Java]
+binding.themeSwitcher.setOnCheckedChangeListener { switcher, checked ->
+	(applicationContext as App).switchTheme(checked)
+}
+\end{lstlisting}
+
+Создайте класс App и унаследуйте от класса Application, а затем
+реализуйте в нём метод onCreate:
+
+\begin{lstlisting}[language=Java]
+class App : Application() {
+    private var darkTheme = false
+
+    override fun onCreate() {
+        super.onCreate()
+        val sharedPrefs = getSharedPreferences(
+			EXAMPLE_PREFERENCES, MODE_PRIVATE
+			)
+        darkTheme = sharedPrefs.getBoolean(
+            "dark_mode",
+            false
+        )
+        if (darkTheme) {
+            setTheme(R.style.Theme_Black)
+        } else {
+            setTheme(R.style.Theme)
+        }
+    }
+
+    fun switchTheme(darkThemeEnabled: Boolean) {
+        darkTheme = darkThemeEnabled
+        AppCompatDelegate.setDefaultNightMode(
+            if (darkThemeEnabled) {
+                AppCompatDelegate.MODE_NIGHT_YES
+            } else {
+                AppCompatDelegate.MODE_NIGHT_NO
+            }
+        )
+    }
+
+    companion object {
+        const val EXAMPLE_PREFERENCES = "example_preferences"
+    }
+}
+\end{lstlisting}
+
+\section{Хранение истории поиска с помощью Shared Preferences}
+
+Создадим разметку для поля ввода и RecycleView для вывода истории.
+
+\begin{lstlisting}[language=XML]
+<androidx.constraintlayout.widget.ConstraintLayout
+	android:id="@+id/searchLayout"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_marginTop="@dimen/margin_small"
+	android:visibility="visible"
+	android:background="@drawable/search_bg"
+	app:layout_constraintEnd_toEndOf="parent"
+	app:layout_constraintStart_toStartOf="parent"
+	app:layout_constraintTop_toBottomOf="@+id/textViewQueueList">
+
+	<EditText
+		android:id="@+id/editTextSearch"
+		android:layout_width="0dp"
+		android:layout_height="@dimen/edit_text_height"
+		android:hint="@string/search_hint"
+		android:inputType="text"
+		android:paddingStart="@dimen/padding_medium"
+		android:paddingEnd="@dimen/padding_medium"
+		android:visibility="gone"
+		android:textColorHint="@color/black"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/history_layout"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:background="@color/grey"
+		android:visibility="gone"
+		app:layout_constraintEnd_toEndOf="@+id/editTextSearch"
+		app:layout_constraintStart_toStartOf="@+id/editTextSearch"
+		app:layout_constraintTop_toBottomOf="@+id/editTextSearch">
+
+		<androidx.recyclerview.widget.RecyclerView
+			android:id="@+id/recyclerViewSearchHistory"
+			android:layout_width="match_parent"
+			android:layout_height="50dp"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
+
+		<Button
+			android:id="@+id/buttonClearHistory"
+			android:layout_width="match_parent"
+			android:layout_height="35dp"
+			android:backgroundTint="@color/blue"
+			android:text="Clear"
+			app:layout_constraintEnd_toEndOf=
+				"@+id/recyclerViewSearchHistory"
+			app:layout_constraintTop_toBottomOf=
+				"@+id/recyclerViewSearchHistory" />
+	</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
+\end{lstlisting}
+
+Далее создадим методы для добавления, получения и очестки истории поиска:
+
+\begin{lstlisting}[language=Java]
+fun addSearchQuery(query: String?) {
+	var searchHistory: MutableList<String?> = getSearchHistory()
+	searchHistory.remove(query)
+	searchHistory.add(0, query)
+	if (searchHistory.size > MAX_HISTORY_SIZE) {
+		searchHistory = searchHistory.subList(0, MAX_HISTORY_SIZE)
+	}
+	val sharedPrefs = getSharedPreferences(
+		HISTORY_PREFERENCES, Context.MODE_PRIVATE
+		)
+	val editor = sharedPrefs?.edit()
+	editor?.putStringSet(SEARCH_HISTORY_KEY, HashSet(searchHistory))
+	editor?.apply()
+}
+fun getSearchHistory(): MutableList<String?> {
+	val preferences = getSharedPreferences(
+		HISTORY_PREFERENCES, Context.MODE_PRIVATE)
+	val historySet = preferences.getStringSet(
+		SEARCH_HISTORY_KEY, HashSet<String>())
+	return ArrayList(historySet)
+}
+fun clearSearchHistory() {
+	val preferences = getSharedPreferences(
+		HISTORY_PREFERENCES, Context.MODE_PRIVATE)
+	val editor = preferences.edit()
+	editor.remove(SEARCH_HISTORY_KEY)
+	editor.apply()
+}
+\end{lstlisting}
+
+И добавим обработку в onClick.
+
+\begin{lstlisting}[language=Java]
+binding.editTextSearch.addTextChangedListener(object : TextWatcher {
+	override fun beforeTextChanged(
+		s: CharSequence?, start: Int, count: Int, after: Int) {
+	}
+	override fun onTextChanged(
+		s: CharSequence?, start: Int, before: Int, count: Int) {
+		val query = s.toString().trim()
+		if (query.isNullOrEmpty()) {
+			binding.buttonClear.visibility = View.GONE
+			queueAdapter.clear()
+		} else {
+			binding.buttonClear.visibility = View.VISIBLE
+			queueAdapter.filter(query)
+		}
+		queueAdapter.filter(s.toString())
+	}
+	override fun afterTextChanged(s: Editable?) {
+	}
+})
+binding.editTextSearch.setOnFocusChangeListener { view, hasFocus ->
+	if (hasFocus) {
+		if (searchHistory.isNotEmpty()) {
+			binding.historyLayout.visibility = View.VISIBLE
+		}
+	} else {
+		binding.historyLayout.visibility = View.GONE
+	}
+}
+binding.buttonClear.setOnClickListener {
+	binding.editTextSearch.text.clear()
+}
+\end{lstlisting}
+
+\section{Автоматическое отправление поискового запроса}
+
+У каждого потока может быть только один Looper и, как следствие, только
+одна очередь MessageQueue. Так как Handler --- посредник между разными
+потоками и скрывает от программиста логику работы с очередью событий,
+каждый Handler должен знать, к какому именно потоку (Looper) он привязан.
+От этого зависит, в какую именно очередь событий Handler будет вставлять
+новые сообщения и какую именно очередь он будет слушать.\par
+Debounce --- это особая логика (функция или сочетание функций), которая
+откладывает выполнение какого-либо действия на определённое время в
+зависимости от требуемых условий. Использование времени системы --- лишь
+один из вариантов реализации debounce.\par
+
+\begin{lstlisting}[language=Java]
+private var searchHandler = Handler(Looper.getMainLooper())
+private var searchRunnable = Runnable { searchRequest() }
+
+private fun searchRequest() {
+	val query = binding.editTextRequest.text.toString().trim()
+	fetchQueueData(query)
+}
+private fun searchDebounce() {
+	searchHandler.removeCallbacks(searchRunnable)
+	searchHandler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY)
+}
+
+companion object {
+	private const val SEARCH_DEBOUNCE_DELAY = 3000L
+}
+\end{lstlisting}
+
+У нас есть Runnable, который инициализирует отправку поискового запроса.
+В момент вызова функции searchDebounce() мы удаляем последнюю
+запланированную отправку запроса и тут же, используя метод postDelayed(),
+планируем запуск этого же Runnable через две секунды.\par
+Теперь добавьте вызов функции в TextWatcher.
+
+\begin{lstlisting}[language=Java]
+binding.editTextRequest.addTextChangedListener(object : TextWatcher {
+	override fun beforeTextChanged(
+		s: CharSequence?, start: Int, count: Int, after: Int
+		) {
+	}
+	override fun onTextChanged(
+		s: CharSequence?, start: Int, before: Int, count: Int
+		) {
+		searchDebounce()
+	}
+	override fun afterTextChanged(s: Editable?) {
+	}
+})
+\end{lstlisting}
+
+\section{ProgressBar}
+ProgressBar --- специальный View-элемент индикации прогресса. Его можно
+встретить почти в каждом приложении.
+Вот так можно добавить ProgressBar в файл вёрстки:
+
+\begin{lstlisting}[language=XML]
+<ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/black"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/buttonAddQueue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchLayout"/>
+\end{lstlisting}
+
+Теперь перед отправкой запроса нужно скрыть с экрана все прочие элементы
+и сделать ProgressBar видимым. А после завершения запроса (успешного или
+нет) спрятать его и показать либо список с результатами, либо
+соответствующее сообщение.
+
+\begin{lstlisting}[language=Java]
+progressBar.visibility = View.VISIBLE
+\end{lstlisting}
+
+Элемент ProgressBar --- верный помощник в любом интерфейсе. Вместо
+бесконечной анимации с его помощью можно отображать реальный прогресс
+и заполнять окружность по мере выполнения какой-то задачи. Сам элемент
+можно отобразить в виде горизонтальной полосы прогресса.
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+
+В результате выполнения практической работы были
+изучены и реализованы таке возмжности PDK Android как:
+
+\begin{itemize}
+	\item переключатель темной темы;
+	\item хранение истории поиска с помощью Shared Preferences;
+	\item автоматическое отправление поискового запроса,
+		если пользователь не выполняет никаких действий в течении 2 секунд;
+	\item отображение ProgressBar при выполнении поискового запроса.
+\end{itemize}
+
