@@ -1,0 +1,661 @@
+\section*{\LARGE Введение}
+\addcontentsline{toc}{section}{Введение}
+
+Данная практическая работа направлена на закрепление полученных навыков
+в области разработки программного обеспечения и баз данных.
+В рамках этой работы студентам предлагается создать веб-приложение,
+предназначенное для управления расписанием в высших учебных заведениях.
+
+\begin{itemize}
+	\item Тема проекта: Расписание в ВУЗе
+	\item Вид приложения: Веб-интерфейс
+	\item СУБД: MongoDB
+	\item Требования к БД:
+	\begin{itemize}
+		\item Необходим кластер, состоящий минимум из 3 узлов
+		\item Для создания необходимо использовать Docker
+		\item Не менее 5 таблиц в базе данных
+		\item Не менее 1 связи Один-Ко-Многим
+		\item Не менее 1 связи Один-К-Одному
+		\item Не менее 1 связи Один-К-Одному
+	\end{itemize}
+	\item Требования к функционалу системы (для каждой таблицы):
+	\begin{itemize}
+		\item Отображение всех документов collection
+		\item Добавление документа
+		\item Удаление документа
+		\item Поиск документа по какому-либо критерию
+		\item Сортировка документов
+	\end{itemize}
+\end{itemize}
+
+\textbf{Требования к отчету}:
+В результате вам необходимо предоставить скриншоты настройки и
+запуска кластера, подключения к базе данных в коде, методы, реализующие
+запросы к базе данных, а также скриншоты работы приложения.\par
+Для реализации данного проекта мы будем использовать
+язык программирования Python и веб-фреймворк Django.
+Python – это высокоуровневый интерпретируемый язык программирования,
+который известен своей простотой и удобством в использовании.
+Django – это мощный фреймворк для создания веб-приложений на Python,
+который предоставляет множество инструментов
+и компонентов для быстрой разработки веб-приложений.\par
+Использование Python и Django для написания сайта позволит
+нам эффективно реализовать функционал расписания для ВУЗа,
+обеспечивая удобство использования и надежность работы приложения.
+Кроме того, Django предоставляет интеграцию с различными базами данных,
+что позволяет нам легко взаимодействовать с MongoDB для хранения данных
+о расписании.\par
+\textbf{Целью} работы является не только создание работающего приложения,
+но и демонстрация понимания принципов работы
+с базами данных и их интеграции в веб-приложения.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Docker-compose}
+
+Для обеспечения работы приложения в контейнеризованной среде
+и управления необходимыми сервисами
+был разработан файл \texttt{docker-compose.yml}.
+Этот файл представляет собой описание сервисов и их конфигураций,
+которые будут развернуты с помощью Docker Compose.\par
+В соответствии с требованиями, изложенными во введении,
+в файле \texttt{docker-compose.yml} определены следующие сервисы:
+
+\begin{enumerate}
+    \item \textbf{MongoDB сервисы
+		(\texttt{mongo}, \texttt{mongo2}, \texttt{mongo3}):}
+    \begin{itemize}
+        \item Каждый сервис использует официальный образ MongoDB.
+        \item Определены три экземпляра MongoDB,
+			формирующих кластер из трех узлов.
+        \item Каждый экземпляр настроен с именем пользователя \texttt{root}
+			и паролем \texttt{mongoadmin}.
+        \item Каждый экземпляр MongoDB прослушивает свой уникальный порт,
+			чтобы избежать конфликтов.
+        \item Зависимость между экземплярами MongoDB указана
+			для правильного порядка инициализации.
+    \end{itemize}
+    
+    \item \textbf{Mongo Express сервис (\texttt{mongo-express}):}
+    \begin{itemize}
+        \item Используется образ Mongo Express
+			для веб-интерфейса управления MongoDB.
+        \item Настроен доступ к MongoDB через сервис \texttt{mongo}
+			с использованием учетных данных \texttt{root/mongoadmin}.
+        \item Предоставлен доступ к веб-интерфейсу по порту 8081.
+    \end{itemize}
+    
+    \item \textbf{Web сервис (\texttt{web}):}
+    \begin{itemize}
+        \item Сервис для запуска веб-приложения.
+        \item Определен сборочный контекст
+			для построения образа веб-приложения.
+        \item После запуска контейнера выполняются команды
+			по миграции базы данных и запуску веб-сервера.
+    \end{itemize}
+\end{enumerate}
+
+Дополнительно, определена сеть \texttt{mongo-compose-network},
+в которой все сервисы будут находиться для обеспечения связи между ними.\par
+Файл \texttt{docker-compose.yml} был разработан в соответствии
+с требованиями к созданию кластера MongoDB,
+а также для обеспечения взаимодействия между сервисами приложения.
+
+\begin{lstlisting}[language=bash]
+version: '3'
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongoadmin
+      MONGO_INITDB_DATABASE: mongo
+    ports:
+      - 27017:27017
+    networks:
+      - mongo-compose-network
+  mongo2:
+    image: mongo
+    container_name: mongo2
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongoadmin
+      MONGO_INITDB_DATABASE: mongo
+    ports:
+      - 27018:27017
+    depends_on:
+      - mongo
+    networks:
+      - mongo-compose-network
+  mongo3:
+    image: mongo
+    container_name: mongo3
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongoadmin
+      MONGO_INITDB_DATABASE: mongo
+    ports:
+      - 27019:27017
+    depends_on:
+      - mongo2
+    networks:
+      - mongo-compose-network
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: q
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongoadmin
+    links:
+      - mongo
+    networks:
+      - mongo-compose-network
+  web:
+    build: .
+    command: sh -c "
+      python manage.py makemigrations
+      && python manage.py migrate
+      && python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongo
+    networks:
+      - mongo-compose-network
+networks:
+    mongo-compose-network:
+      driver: bridge
+\end{lstlisting}
+
+Команда для запуска контейнеров на основе файла \texttt{docker-compose.yml}:
+
+\begin{lstlisting}[language=bash]
+docker-compose up -d --build
+\end{lstlisting}
+
+\section{Описание таблиц}
+
+Опишем таблицы в виде моделей Django.
+
+\subsection{Модель TinyGroup}
+
+Модель \texttt{TinyGroup} представляет собой таблицу в базе данных,
+предназначенную для хранения информации о малых группах.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{groupName}: Поле типа \texttt{CharField}
+		с максимальной длиной 15 символов.
+		Это поле предназначено для хранения имени малой группы.
+    \item \texttt{groupSuffix}: Поле типа \texttt{CharField}
+	с максимальной длиной 100 символов.
+	Оно предназначено для хранения суффикса или описания малой группы.
+\end{itemize}
+
+Эта модель может быть использована в Django-приложении для создания,
+сохранения и запроса информации о малых группах.
+Например, она может быть использована в системе управления расписанием
+в учебном заведении для хранения данных о группах студентов.
+
+\begin{lstlisting}[language=bash]
+class TinyGroup(models.Model):
+    groupName = models.CharField(max_length=15)
+    groupSuffix = models.CharField(max_length=100)
+\end{lstlisting}
+
+
+\subsection{Модель RichGroup}
+
+Модель \texttt{RichGroup} представляет собой таблицу в базе данных,
+которая содержит расширенную информацию о малых группах.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{group}: Поле типа \texttt{OneToOneField},
+		которое связывает модель \texttt{RichGroup}
+		с моделью \texttt{TinyGroup} через отношение "один к одному".
+		При удалении связанной записи из модели \texttt{TinyGroup},
+		связанная запись из модели \texttt{RichGroup} также будет удалена
+		(с помощью параметра \texttt{on\_delete=models.CASCADE}).
+    \item \texttt{remoteFile}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения пути
+		к удаленному файлу или его названия.
+    \item \texttt{unitName}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения названия подразделения,
+		к которому относится малая группа.
+    \item \texttt{unitCourse}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения информации о курсе,
+		к которому относится малая группа.
+    \item \texttt{updatedDate}: Поле типа \texttt{DateTimeField}.
+		Оно предназначено для хранения даты и времени последнего
+		обновления информации о малой группе.
+\end{itemize}
+
+Эта модель может быть использована в Django-приложении
+для хранения более подробной информации о малых группах,
+такой как информация о курсах и подразделениях,
+а также для обновления информации о малой группе с отслеживанием даты
+и времени обновления.
+
+\begin{lstlisting}[language=bash]
+class RichGroup(models.Model):
+    group = models.OneToOneField(TinyGroup, on_delete=models.CASCADE)
+    remoteFile = models.CharField(max_length=100)
+    unitName = models.CharField(max_length=100)
+    unitCourse = models.CharField(max_length=100)
+    updatedDate = models.DateTimeField()
+\end{lstlisting}
+
+
+\subsection{Модель DaySchedule}
+
+Модель \texttt{DaySchedule} представляет собой таблицу в базе данных,
+которая содержит расписание занятий
+для определенной группы на определенный день.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{group}: Поле типа \texttt{ForeignKey},
+		которое связывает модель \texttt{DaySchedule}
+		с моделью \texttt{RichGroup} через отношение "многие к одному".
+		При удалении связанной записи из модели \texttt{RichGroup},
+		все связанные записи из модели \texttt{DaySchedule}
+		также будут удалены
+		(с помощью параметра \texttt{on\_delete=models.CASCADE}).
+    \item \texttt{day}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения информации о дне недели,
+		к которому относится расписание.
+\end{itemize}
+
+Эта модель может быть использована в Django-приложении
+для хранения расписания занятий для конкретных групп
+на определенные дни недели.
+
+\begin{lstlisting}[language=bash]
+class DaySchedule(models.Model):
+    group = models.ForeignKey(RichGroup, on_delete=models.CASCADE)
+    day = models.CharField(max_length=100)
+\end{lstlisting}
+
+\subsection{Модель Lesson}
+
+Модель \texttt{Lesson} представляет собой таблицу в базе данных,
+которая содержит информацию о конкретном занятии в расписании.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{day\_schedule}: Поле типа \texttt{ForeignKey},
+		которое связывает модель \texttt{Lesson}
+		с моделью \texttt{DaySchedule} через отношение "многие к одному".
+		При удалении связанной записи из модели \texttt{DaySchedule},
+		все связанные записи из модели \texttt{Lesson} также будут удалены
+		(с помощью параметра \texttt{on\_delete=models.CASCADE}).
+    \item \texttt{is\_even\_week}: Поле типа \texttt{BooleanField},
+		которое указывает, проходит ли занятие на четной неделе.
+		По умолчанию установлено значение \texttt{True}.
+    \item \texttt{name}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения названия занятия.
+    \item \texttt{type}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения типа занятия
+		(например, лекция, практика, семинар).
+    \item \texttt{tutor}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения информации о преподавателе,
+		ведущем занятие. Поле может быть пустым (\texttt{null=True}),
+		если информация о преподавателе неизвестна или не применима.
+    \item \texttt{place}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов.
+		Оно предназначено для хранения информации о месте проведения занятия.
+		Поле также может быть пустым (\texttt{null=True}),
+		если информация о месте неизвестна или не применима.
+    \item \texttt{link}: Поле типа \texttt{URLField}
+		с максимальной длиной 200 символов.
+		Оно предназначено для хранения ссылки на материалы или онлайн-ресурсы,
+		связанные с занятием. Поле может быть пустым (\texttt{null=True}),
+		если ссылка не предоставлена.
+\end{itemize}
+
+Эта модель может быть использована для хранения информации о занятиях
+в рамках определенного расписания на определенный день.
+
+\begin{lstlisting}[language=bash]
+class Lesson(models.Model):
+    day_schedule = models.ForeignKey(DaySchedule, on_delete=models.CASCADE)
+    is_even_week = models.BooleanField(default=True)
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=100)
+    tutor = models.CharField(max_length=100, blank=True, null=True)
+    place = models.CharField(max_length=100, blank=True, null=True)
+    link = models.URLField(max_length=200, blank=True, null=True)
+\end{lstlisting}
+
+Модель \texttt{Stats} представляет собой таблицу в базе данных,
+которая содержит статистическую информацию о системе.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{groupsCount}: Поле типа \texttt{IntegerField}.
+		Оно предназначено для хранения количества групп,
+		зарегистрированных в системе.
+    \item \texttt{scrapperUpdatedDate}: Поле типа \texttt{DateTimeField}.
+		Оно предназначено для хранения даты
+		и времени последнего обновления информации,
+		полученной скрапером или каким-либо другим внешним источником данных.
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+class Stats(models.Model):
+    groupsCount = models.IntegerField()
+    scrapperUpdatedDate = models.DateTimeField()
+\end{lstlisting}
+
+\subsection{Модель Homework}
+
+Модель \texttt{Homework} представляет собой таблицу в базе данных,
+которая содержит информацию о домашних заданиях.
+Каждая запись в таблице содержит следующие поля:
+
+\begin{itemize}
+    \item \texttt{title}: Поле типа \texttt{CharField}
+		с максимальной длиной 100 символов. Оно предназначено
+		для хранения заголовка или названия домашнего задания.
+    \item \texttt{description}: Поле типа \texttt{TextField}.
+		Оно предназначено для хранения описания домашнего задания.
+		Поле может содержать большой объем текстовой информации.
+    \item \texttt{due\_date}: Поле типа \texttt{DateField}.
+		Оно предназначено для хранения даты сдачи домашнего задания.
+    \item \texttt{created\_at}: Поле типа \texttt{DateTimeField}
+		с параметром \texttt{auto\_now\_add=True}.
+		Это поле автоматически устанавливается при создании записи
+		и содержит дату и время создания записи.
+\end{itemize}
+
+Эта модель может быть использована для хранения информации
+о домашних заданиях, их описании,
+сроках сдачи и времени создания записей о них.
+
+\begin{lstlisting}[language=bash]
+class Homework(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    due_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+\end{lstlisting}
+
+\section{Настройка подключения к базе данных}
+
+Для обеспечения взаимодействия приложения Django
+с базой данных MongoDB необходимо произвести соответствующую настройку
+подключения. Для этого используется файл настроек `settings.py`
+в проекте Django.\par
+В данной главе рассмотрим пример конфигурации подключения
+к базе данных MongoDB с использованием библиотеки Djongo.
+
+\subsection{Настройка параметров базы данных}
+
+В файле `settings.py` определяется словарь `DATABASES`,
+в котором указываются параметры подключения к базе данных.
+Приведенный ниже пример демонстрирует конфигурацию подключения
+к базе данных MongoDB:
+
+\begin{lstlisting}
+	language=Python,
+	caption={Настройка подключения к базе данных в Django}
+	]
+DATABASES = {
+    'default': {
+        'ENGINE': 'djongo',
+        'ENFORCE_SCHEMA': True,
+        'NAME': 'mongo',
+        "CLIENT": {
+            "host": 'mongo',
+            "port": 27017,
+            "username": 'root',
+            "password": 'mongoadmin',
+        },
+    }
+}
+\end{lstlisting}
+
+В данной конфигурации:
+
+\begin{itemize}
+    \item \texttt{ENGINE}: Указывает на использование бэкенда Djongo
+		для взаимодействия с MongoDB.
+    \item \texttt{ENFORCE\_SCHEMA}: Указывает, следует ли применять
+		схему базы данных при миграциях (по умолчанию \texttt{True}).
+    \item \texttt{NAME}: Имя базы данных,
+		с которой приложение будет взаимодействовать.
+    \item \texttt{CLIENT}: Параметры клиента для подключения к MongoDB.
+		В данном случае указаны хост, порт, имя пользователя и пароль.
+\end{itemize}
+
+После настройки параметров подключения приложение Django
+будет готово использовать базу данных MongoDB для хранения данных.
+
+\subsection{Применение миграций}
+
+После настройки подключения к базе данных следует выполнить миграции, чтобы создать необходимые таблицы и индексы в MongoDB. Для этого используется команда:
+
+\begin{verbatim}
+python manage.py migrate
+\end{verbatim}
+
+Эта команда автоматически создаст необходимые структуры в базе данных в соответствии с моделями Django.
+
+\section{Создание команды для получения данных из внешнего API}
+
+Для загрузки данных из внешнего API в модели Django можно создать
+специальную команду, которая будет выполнять эту задачу.
+В данной главе будет описан процесс создания такой команды
+на примере получения информации о группах из внешнего API.
+
+\subsection{Описание команды}
+
+Сначала определяется класс команды,
+который наследуется от базового класса \texttt{BaseCommand}:
+
+\begin{lstlisting}
+	language=Python,
+	caption={Определение команды для получения данных из API}
+	]
+from django.core.management.base import BaseCommand
+from myapp.models import Stats, TinyGroup, RichGroup, DaySchedule, Lesson
+import requests
+import json
+class Command(BaseCommand):
+    url = "https://mirea.xyz/api/v1.3/"
+    groups = "groups/all"
+    certain = "groups/certain"
+    status = "stats"
+    help = 'Load data from API into Django models'
+    def handle(self, *args, **options):
+\end{lstlisting}
+
+В методе \texttt{handle} определяется логика загрузки данных
+из API и сохранения их в моделях Django.
+
+\subsection{Загрузка данных из API}
+
+В методе \texttt{handle} производится запрос к API
+для получения информации о группах и статистики.
+Полученные данные затем сохраняются в моделях Django:
+
+\begin{lstlisting}[language=Python, caption={Загрузка данных из API}]
+def handle(self, *args, **options):
+    stats = requests.get(f"{self.url}{self.status}").json()
+    stats = Stats.objects.create(
+        groupsCount=stats['groupsCount'],
+        scrapperUpdatedDate=stats['scrapperUpdatedDate']
+    )
+    stats.save()
+    with open("res/data/data.json") as f:
+        groups = json.load(f)
+    for group in groups:
+        group_name = group['groupName']
+        group_suffix = group['groupSuffix']
+        t_group, _ = TinyGroup.objects.get_or_create(
+			groupName=group_name, groupSuffix=group_suffix
+			)
+        data = requests.get(
+            f"{self.url}{self.certain}",
+            params={'name': group_name, 'suffix': group_suffix}
+        ).json()
+        for group_data in data:
+            r_group, _ = RichGroup.objects.update_or_create(
+                group=t_group,
+                defaults={
+                    "remoteFile": group_data["remoteFile"],
+                    "unitName": group_data["unitName"],
+                    "unitCourse": group_data["unitCourse"],
+                    "updatedDate": group_data["updatedDate"]
+                }
+            )
+            for day_schedule_data in group_data["schedule"]:
+                day_schedule, _ = DaySchedule.objects.get_or_create(
+                    group=r_group,
+                    day=day_schedule_data["day"]
+                )
+                for f_even, lessons in enumerate(
+						[day_schedule_data['odd'], day_schedule_data['even']]):
+                    for dict_lesson in lessons:
+                        for lesson in dict_lesson:
+                            lsn = Lesson.objects.create(
+                                day_schedule=day_schedule,
+                                is_even_week=f_even,
+                                name=lesson["name"],
+                                type=lesson["type"],
+                                tutor=lesson.get("tutor"),
+                                place=lesson.get("place"),
+                                link=lesson.get("link")
+                            )
+                            lsn.save()
+\end{lstlisting}
+
+Этот код иллюстрирует процесс загрузки данных из внешнего API
+и сохранения их в моделях Django.
+
+\subsection{Использование команды}
+
+После создания команды ее можно использовать
+из командной строки Django для загрузки данных из API:
+
+\begin{verbatim}
+python manage.py load_data_from_api
+\end{verbatim}
+
+Это выполнит метод \texttt{handle} команды, который загрузит данные из API и сохранит их в моделях Django.
+
+\section{Работа приложения в действии}
+
+В данной главе представлены скриншоты работы веб-приложения,
+созданного на основе разработанных моделей и функционала.
+
+\subsection{Главная страница приложения}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-11 13-27-36}
+	\caption{Объекты}
+    \label{fig:homepage}
+\end{image}
+
+На рисунке~\ref{fig:homepage} показана главная страница приложения, на которой пользователь может видеть общий обзор расписания вуза.
+
+\subsection{Страница просмотра групп}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-11 13-28-05}
+    \caption{Страница просмотра групп}
+    \label{fig:groups_page}
+\end{image}
+
+На рисунке~\ref{fig:groups_page} показана страница,
+на которой пользователь может просматривать список доступных групп.
+
+\subsection{Страница просмотра занятий}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-11 13-28-05}
+    \caption{Страница просмотра занятий}
+    \label{fig:lesson_page}
+\end{image}
+
+На рисунке~\ref{fig:lesson_page} показана страница,
+на которой пользователь может просматривать расписание группы.
+
+\subsection{Страница просмотра статуса парсинга расписания}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-11 13-27-40}
+    \caption{Страница просмотра статуса парсинга расписания}
+    \label{fig:status_page}
+\end{image}
+
+На рисунке~\ref{fig:status_page} показана страница,
+на которой пользователь может просматривать статуса парсинга расписания.
+
+\subsection{Страница домашнего задания}
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-11 13-28-25}
+    \caption{Страница домашнего задания}
+    \label{fig:homework_page}
+\end{image}
+
+На рисунке~\ref{fig:homework_page} показана страница,
+на которой пользователь может просматривать, создавать и удалять
+домашние задания.
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+
+В результате выполнения данной практической работы было создано
+веб-приложение для управления расписанием в высших учебных заведениях.
+Для разработки приложения был выбран язык программирования Python
+и веб-фреймворк Django, что позволило эффективно реализовать
+требуемый функционал.\par
+Основные функции приложения включают отображение расписания,
+добавление новых записей, удаление и поиск записей по различным критериям,
+а также сортировку данных. Пользовательский интерфейс разработан
+с учетом простоты использования и интуитивной навигации,
+что делает работу с приложением удобной и эффективной.\par
+Для хранения данных была использована база данных MongoDB,
+что обеспечило надежное хранение и быстрый доступ к информации.
+Кроме того, был создан кластер MongoDB, состоящий из трех узлов,
+что повышает отказоустойчивость и масштабируемость системы.\par
+В процессе разработки были реализованы все требования к базе данных
+и функционалу системы, а также успешно выполнены все задачи,
+поставленные перед командой. Полученный опыт разработки веб-приложения
+позволил закрепить и расширить знания по использованию Python и Django
+для создания современных веб-приложений.\par
+В целом, созданное приложение представляет собой полнофункциональное
+решение для управления расписанием в ВУЗе и может быть дальше развито
+и оптимизировано для удовлетворения потребностей конечных пользователей.\par
+Исходный код проекта доступен на GitHub по следующей ссылке:
+\url{https://github.com/AndB0ndar/db_web_schedule}.
+
