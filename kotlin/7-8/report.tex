@@ -1,0 +1,290 @@
+\section*{\LARGE Цель практической работы}
+\addcontentsline{toc}{section}{Цель практической работы}
+
+\textbf{Задание}:
+если в приложении для курсовой работы не предполагается
+создание собственного сервера, необходимо повторить действия,
+описанные в практической работе.
+
+\clearpage
+
+\section*{\LARGE Выполнение практической работы}
+\addcontentsline{toc}{section}{Выполнение практической работы}
+
+\section{Переключатель темной темы}
+
+Ktor (произносится как Кэй-тор) - это созданный с нуля фреймворк,
+основу которого составляет Kotlin и корутины. С помощью Ktor можно
+создавать клиентские и серверные приложения, которые будут работать на
+разных платформах. Фреймворк отлично подходит для приложений,
+требующих связь по HTTP и/или сокетам. Это могут быть, например, HTTPбэкенды и RESTful-системы, независимо от того, построены ли они по
+микросервисному принципу или нет.\par
+Ktor родился под влиянием других фреймворков, таких как Wasabi и
+Kara, с целью максимально использовать некоторые возможности языка Kotlin,
+такие как DSL (внутренний предметно-ориентированный язык) и корутины.
+Если необходимо создать системы, которые будут связаны друг с другом, Ktor
+отлично подходит для этого и является производительным, асинхронным,
+многоплатформенным решением.\par
+В настоящее время клиентская часть Ktor работает на всех платформах,
+на которые ориентирован Kotlin, то есть JVM, JavaScript и Native. Однако,
+серверная часть Ktor пока ограничена только JVM.\par
+
+\section{Создание проекта Ktor}
+
+Для создания нового проекта Ktor необходимо использовать
+вебгенератор проектов Ktor.\par
+Укажите название Вашего проекта в соответствующем поле.
+Нажмите на "<Настроить параметры проекта">
+("Adjust project setting").\par
+В открывшемся меню необходимо настроить:
+
+\begin{itemize}
+	\item систему сборки (Build system) --- Gradle Kotlin;
+	\item название пакета проекта (Website);
+	\item движок (Engine), используемый для запуска сервера --- CIO;
+	\item как будет происходить настройка сервера
+			(Configuration in) --- Code.
+\end{itemize}
+
+Нажмите "<Добавить плагины"> ("Add plugins"),
+в полученном списке выберите Content Negotiation,
+kotlinx.serialization, Routing, postgresql.\par
+Нажмите на кнопку "Generate project",
+после чего, должна начаться загрузка проекта.\par
+Запустите проект в любой IDE.\par
+Запустите Postman, и отправьте GET-запрос по адресу,
+указанному в файле Application.kt (host и port).
+
+\section{Настройка сериализации}
+
+Добавьте зависимость для kotlinx.
+
+\begin{verbatim}
+implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0-RC")
+\end{verbatim}
+
+Добавьте в класс Routing data class Test,
+который содержит только одно поле text строкового формата,
+а функцию configureRouting() необходимо изменить таким образом,
+чтобы в качестве ответа на GET-запрос был получен объект
+класса Test.\par
+Проверьте работоспособность сервера с помощью Postman, в отчете
+укажите, какой ответ был получен. 
+
+\section{Регистрация и логин}
+
+\subsection{Модели}
+
+Создайте пакет models, а в нем класс Authorization.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-55-22.png}
+	\caption{Класс Authorization}
+    \label{fig:loginremote}
+\end{image}
+
+В данных классах мы указываем, какие данные мы будем отправлять
+при запросах и получать в ответ. 
+Таким образом, при регистрации мы отправляем логин, пароль и почту,
+а в ответ получим токен, то есть уникальный номер пользователя, а при входе
+(логине) отправляем логин и пароль, в ответ, также, получаем токен.
+
+\subsection{Сервис для работы с базой данных}
+
+Напишем сервис для для работы с базой данный регистрации.
+
+\begin{lstlisting}[language=Java]
+class AuthorizationService(private val connection: Connection) {
+    companion object {
+        const val TABLE_NAME = "UserAuth"
+        const val COLUMN_ID = "ID"
+        private const val COLUMN_LOGIN = "LOGIN"
+        private const val COLUMN_FIRSTNAME = "FIRSTNAME"
+        private const val COLUMN_LASTNAME = "LASTNAME"
+        private const val COLUMN_GROUP_ID = "GROUP_ID"
+        private const val COLUMN_PASSWORD_HASH = "PASSWORD_HASH"
+        private const val COLUMN_TOKEN = "TOKEN"
+        private const val CREATE_TABLE_USERS =
+            "CREATE TABLE IF NOT EXISTS \$TABLE_NAME (" +
+                    "\$COLUMN_ID SERIAL PRIMARY KEY" +
+                    ", \$COLUMN_LOGIN VARCHAR(255)" +
+                    ", \$COLUMN_FIRSTNAME VARCHAR(255)" +
+                    ", \$COLUMN_LASTNAME VARCHAR(255)" +
+                    ", \$COLUMN_GROUP_ID INT" +
+                    ", \$COLUMN_PASSWORD_HASH VARCHAR(255)" +
+                    ", \$COLUMN_TOKEN VARCHAR(255)" +
+                    ", FOREIGN KEY (\$COLUMN_GROUP_ID) " +
+					"REFERENCES \${GroupService.TABLE_NAME}(\$COLUMN_ID)" +
+                    ");"
+        private const val INSERT_USER =
+            "INSERT INTO \$TABLE_NAME (" +
+                    "\$COLUMN_LOGIN, \$COLUMN_FIRSTNAME, " +
+					"\$COLUMN_LASTNAME, \$COLUMN_GROUP_ID, " +
+					"\$COLUMN_PASSWORD_HASH, \$COLUMN_TOKEN" +
+                    ") VALUES (?, ?, ?, ?, ?, ?)"
+        private const val SELECT_USER_BY_LOGIN =
+            "SELECT * FROM \$TABLE_NAME WHERE \$COLUMN_LOGIN = ?"
+        private const val SELECT_USER_BY_LOGIN_AND_PASSWORD =
+            "SELECT * FROM \$TABLE_NAME " +
+			"WHERE \$COLUMN_LOGIN = ? AND \$COLUMN_PASSWORD_HASH = ?"
+        private const val SELECT_USER_BY_TOKEN =
+            "SELECT * FROM \$TABLE_NAME WHERE \$COLUMN_TOKEN = ?"
+    }
+    init {
+        val statement = connection.createStatement()
+        statement.executeUpdate(CREATE_TABLE_USERS)
+    }
+    fun register(
+		login: String
+		, firstName: String, lastName: String
+		, groupId: Int, password: String
+		): String? {
+        if (checkUserExistsByLogin(login)) {
+            return null
+        }
+        val hashedPassword = hashPassword(password)
+        val token = UUID.randomUUID().toString()
+        val preparedStatement = connection.prepareStatement(INSERT_USER)
+        preparedStatement.setString(1, login)
+        preparedStatement.setString(2, firstName)
+        preparedStatement.setString(3, lastName)
+        preparedStatement.setInt(4, groupId)
+        preparedStatement.setString(5, hashedPassword)
+        preparedStatement.setString(6, token)
+        preparedStatement.executeUpdate()
+        return token
+    }
+    fun login(login: String, password: String): String? {
+        val hashedPassword = hashPassword(password)
+        val preparedStatement = connection.prepareStatement(
+			SELECT_USER_BY_LOGIN_AND_PASSWORD
+			)
+        preparedStatement.setString(1, login)
+        preparedStatement.setString(2, hashedPassword)
+        val resultSet = preparedStatement.executeQuery()
+        return if (resultSet.next()) {
+            resultSet.getString(COLUMN_TOKEN)
+        } else {
+            null
+        }
+    }
+    fun getUserByToken(token: String): User? {
+        val preparedStatement = connection.prepareStatement(
+			SELECT_USER_BY_TOKEN
+			)
+        preparedStatement.setString(1, token)
+        val resultSet = preparedStatement.executeQuery()
+        return if (resultSet.next()) {
+            User(
+                id = resultSet.getInt(COLUMN_ID),
+                login = resultSet.getString(COLUMN_LOGIN),
+                firstName = resultSet.getString(COLUMN_FIRSTNAME),
+                lastName = resultSet.getString(COLUMN_LASTNAME),
+                groupId = resultSet.getInt(COLUMN_GROUP_ID),
+                token = resultSet.getString(COLUMN_TOKEN)
+            )
+        } else {
+            null
+        }
+    }
+    private fun checkUserExistsByLogin(login: String): Boolean {
+        val preparedStatement = connection.prepareStatement(
+			SELECT_USER_BY_LOGIN
+			)
+        preparedStatement.setString(1, login)
+        val resultSet = preparedStatement.executeQuery()
+        return resultSet.next()
+    }
+    private fun hashPassword(password: String): String {
+        val bytes = password.toByteArray()
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashedBytes = digest.digest(bytes)
+        return hashedBytes.joinToString("") { "%02x".format(it) }
+    }
+}
+\end{lstlisting}
+
+\subsection{Обработчики запросов}
+
+В пакете handler создайте класс RegisterHandler.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-49-47.png}
+	\caption{Класс RegisterHandler}
+    \label{fig:registerhandler}
+\end{image}
+
+Первое условие проверяет введенную почту в написанном ранее сервисе.
+Второе условие проверяет был ли зарегистрирован пользователь ранее.
+Далее формируется токен, и пара логин -- токен записывается в базу данный.\par
+Добавьте в класс LoginHandler проверку введенного пароля.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-49-18.png}
+	\caption{Класс LoginHandler}
+    \label{fig:loginhandler}
+\end{image}
+
+Функция firstOrNull возвращает первый элемент, соответствующий
+заданному, или null, если элемент не найден.\par
+Таким образом, если пользователь не зарегистрирован, то переменная
+first будет равна null, и в ответ будет получено сообщение "User not found",
+иначе, если введенный пароль совпадает с зарегистрированным, то в ответ
+будет получен токен, в обратном случае будет получено сообщение "Invalid
+password".
+
+\subsection{Конфигурационный файл}
+
+Далее напишем конфигурационный файл для работы приложения
+и подключения к базе данный.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-48-06.png}
+	\caption{Конфигурационный файл}
+    \label{fig:configfile}
+\end{image}
+
+\subsection{Подключение к базе данный}
+
+Напишем клас для создание подключения к базе данный.
+Для дальнейшей работы сервисов.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-48-36.png}
+	\caption{Подключение к базе данный}
+    \label{fig:connection}
+\end{image}
+
+\subsection{Main функция сервера и модули}
+
+Для запуска сервера необходима загрузить настройки из файла конфигурации
+с помощью движка CIO.
+Далее необходимо инициализировать подключение к базе данный
+и вызвать обработчик запросов.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-47-53.png}
+	\caption{Main функция сервера и модули}
+    \label{fig:main}
+\end{image}
+
+\subsection{Обработчик запросов}
+
+Создадим обработчкик запросов.
+Это будет отправной функцией для всех остальный обработчиков.
+
+\begin{image}
+	\includegrph{Screenshot from 2024-05-17 09-49-07.png}
+	\caption{Обработчик запросов}
+    \label{fig:routing}
+\end{image}
+
+
+\clearpage
+
+\section*{\LARGE Вывод}
+\addcontentsline{toc}{section}{Вывод}
+
+В результате выполнения практической работы мы ознакомились с фреймворком Ktor
+и написали свой сервер с API для нашего клиенского приложения.
+
