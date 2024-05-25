@@ -4,7 +4,9 @@
 \usepackage[T1,T2A]{fontenc} % correct encoding for pdfLaTeX
 \usepackage[utf8]{inputenc} % correct encoding source file
 \usepackage[english,russian]{babel} % correct language
+
 \usepackage[labelsep=period]{caption}
+\captionsetup[figure]{labelsep=endash}
 
 
 \frenchspacing
@@ -16,6 +18,17 @@
 \setlength{\parindent}{1.25cm}
 \sloppy
 
+\usepackage{setspace}
+\onehalfspacing
+
+% section size
+\usepackage{titlesec}
+
+\titleformat{\chapter}{\fontsize{18pt}{22pt}\bfseries}{\thechapter.}{1em}{}
+\titleformat{\section}{\fontsize{16pt}{20pt}\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}{\fontsize{14pt}{18pt}\bfseries}{\thesubsection.}{1em}{}
+\titleformat{\subsubsection}{\fontsize{14pt}{18pt}\bfseries}{\thesubsubsection.}{1em}{}
+
 
 % for graphics
 \usepackage{graphicx}
@@ -23,18 +36,27 @@
 \usepackage{amsmath}
 \usepackage{listings}
 \lstset{
-	basicstyle=\small,
+	basicstyle=\ttfamily\footnotesize,
+	backgroundcolor=\color{white},
 	frame=single,
+	framerule=0.5pt,
+	rulecolor=\color{black},
 	captionpos=t,
-	tabsize=4,
-	breaklines,
+	tabsize=2,
+	breaklines=true,
+	breakatwhitespace=true,
+	%numbers=left,
+	%numberstyle=\tiny\color{gray},
+	%stepnumber=1,
+	%numbersep=10pt,
 	columns=fullflexible,
     flexiblecolumns,
     keepspaces=true,
-	showspaces=flase,
+	showspaces=false,
 	showstringspaces=false,
 	showtabs=false,
-    extendedchars=\true
+    extendedchars=true,
+	breakautoindent=true,
 }
 
 \usepackage{longtable}
@@ -43,7 +65,10 @@
 
 \usepackage{hyperref}
 \hypersetup{
-    pdfborder = {0 0 0}
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
 }
 
 \usepackage{enumitem}
@@ -73,5 +98,19 @@
 }{
 	\end{figure}
 }
-\newcommand\includegrph[2][width=0.8\textwidth]{\includegraphics[#1]{#2}}
+\newcommand\includegrph[2][width=0.6\textwidth]{\includegraphics[#1]{#2}}
+
+\newcommand{\Appendix}{
+	\appendix
+	\titleformat{\chapter}{\fontsize{18pt}{22pt}\bfseries}{\appendixname~\thechapter.}{1em}{}
+}
+
+\newcommand\Chapter[1]{
+	\refstepcounter{chapter}
+	\chapter*{
+		\textbf{\chaptername\ \arabic{chapter}.}
+		\raggedright #1
+	}
+	\addcontentsline{toc}{chapter}{\arabic{chapter} #1}
+}
 

@@ -1,41 +1,210 @@
 \chapter{GitHub}
-Ссылка на репозиторий в GitHub c пирложением, реализованным в курсовой работе:
-\url{https://github.com/AndB0ndar/Reader.git}
+Ссылки на репозитории в GitHub c реализацией пирложениея курсовой работы:
 
-\chapter{База данных}
-\section{DBHelper}\label{lst:db:helper}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/DataBase/DBHelper.java}
+\begin{itemize}
+	\item \textbf{Клиенская} часть приложения:
+		\href{https://github.com/AndB0ndar/kotlin6s}{kotlin6s}
+	\item \textbf{Серверная} часть приложения:
+		\href{https://github.com/AndB0ndar/kotlin6s-server}{kotlin6s-server}
+\end{itemize}
 
-\section{Модели}
-\subsection{BookModel}\label{lst:db:model:book}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/model/BookModel.java}
+\chapter{Клиенское приложение}
 
-\subsection{NoteModel}\label{lst:db:model:note}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/model/NoteModel.java}
-
-\subsection{BookMarkModel}\label{lst:db:model:bookmark}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/model/BookMarkModel.java}
+\section{Retrofit}\label{lst:retrofit}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{ApiService}]
+{./course/code/service/ApiService.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Singleton RetrofitInstance}]
+{./course/code/service/RetrofitInstance.kt}
 
 \section{Адаптеры}
-\subsection{BookDBAdapter}\label{lst:db:adapter:book}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/DataBase/BookDBAdapter.java}
+\lstinputlisting [language=Kotlin
+	, caption=\leftline{Адаптер QueueListAdapter}
+	, label={lst:adapter:queue:list}]
+{./course/code/adapter/QueueListAdapter.kt}
+\lstinputlisting [language=Kotlin
+	, caption=\leftline{Адаптер QueueItemAdapter}
+	, label={lst:adapter:queue:item}]
+{./course/code/adapter/QueueItemAdapter.kt}
 
-\subsection{NoteDBAdapter}\label{lst:db:adapter:note}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/DataBase/NoteDBAdapter.java}
+\section{AuthManager}\label{lst:auth:manager}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Класс AuthManager}]
+{./course/code/AuthManager.kt}
 
-\subsection{BookMarksDBAdapter}\label{lst:db:adapter:bookmark}
-\lstinputlisting[language=Java]
-{/home/arbon/Programming/OtherProjects/AndroidStudioProjects/CourseArchMOS/%
-app/src/main/java/com/example/coursearchmos/DataBase/BookMarksDBAdapter.java}
+\section{Класс приложения (App)}\label{lst:app}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Класс приложения (App)}]
+{./course/code/App.kt}
+
+\section{Активити и разметка}
+\subsection{LoginActivity}\label{lst:activity:login}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код LoginActivity}]
+{./course/code/LoginActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка LoginActivity}]
+{./course/res/layout/activity_login.xml}
+
+\subsection{RegisterActivity}\label{lst:activity:register}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код RegisterActivity}]
+{./course/code/RegisterActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка RegisterActivity}]
+{./course/res/layout/activity_register.xml}
+
+\subsection{HomeActivity}\label{lst:activity:home}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код HomeActivity}]
+{./course/code/HomeActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка HomeActivity}]
+{./course/res/layout/activity_home.xml}
+
+\subsection{AddQueueActivity}\label{lst:activity:queue:add}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код AddQueueActivity}]
+{./course/code/AddQueueActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка AddQueueActivity}]
+{./course/res/layout/activity_add_queue.xml}
+
+\subsection{ProfileActivity}\label{lst:activity:profile}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код ProfileActivity}]
+{./course/code/ProfileActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка ProfileActivity}]
+{./course/res/layout/activity_profile.xml}
+
+\subsection{QueueActivity}\label{lst:activity:queue}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Код QueueActivity}]
+{./course/code/QueueActivity.kt}
+\lstinputlisting[language=XML
+	, caption=\leftline{Разметка QueueActivity}]
+{./course/res/layout/activity_queue.xml}
+
+\section{Ресурсы}
+\lstinputlisting[language=XML
+	, caption=\leftline{Строковые ресурсы}
+	, label={lst:res:strings}]
+{./course/res/values/strings.xml}
+\lstinputlisting[language=XML
+	, caption=\leftline{Цветовые ресурсы}
+	, label={lst:res:colors}]
+{./course/res/values/colors.xml}
+\lstinputlisting[language=XML
+	, caption=\leftline{Ресурсы размеров}
+	, label={lst:res:dimens}]
+{./course/res/values/dimens.xml}
+\lstinputlisting[language=XML
+	, caption=\leftline{Темы}
+	, label={lst:res:themes}]
+{./course/res/values/themes.xml}
+
+\chapter{Серверная часть}
+
+\section{Маршрутизация}\label{lst:routing}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Общий маршрут}]
+{./course/server/plugins/Routing.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик авторизации}]
+{./course/server/handler/AuthorizationHandler.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик групп}]
+{./course/server/handler/GroupHandler.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик очередей}]
+{./course/server/handler/QueueHandler.kt}
+
+\section{Конфигурация приложения}\label{lst:config}
+\lstinputlisting[caption=\leftline{Конфигурация приложения}]
+{/home/arbon/Programming/OtherProjects/queue_server/src/main/resources/application.conf}
+
+\section{Работа с базой данных}
+
+\subsection{Подключение к базе данных}\label{lst:db:connect}
+\begin{lstlisting}[language=Kotlin
+	, caption=\leftline{Подключение к базе данных}]
+fun Application.configureDatabases(): Connection {
+    return connectToPostgres(embedded = false)
+}
+fun Application.connectToPostgres(embedded: Boolean): Connection {
+    Class.forName("org.postgresql.Driver")
+    if (embedded) {
+        return DriverManager.getConnection("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", "root", "")
+    } else {
+        val url = environment.config.property("postgres.url").getString()
+        val user = environment.config.property("postgres.user").getString()
+        val password = environment.config.property("postgres.password").getString()
+
+        return DriverManager.getConnection(url, user, password)
+    }
+}
+\end{lstlisting}
+
+\subsection{Сервисы работы с базой данных}\label{lst:db:service}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{AuthorizationService}]
+{./course/server/services/AuthorizationService.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{ConnectionService}]
+{./course/server/services/ConnectionService.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{GroupService}]
+{./course/server/services/GroupService.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{QueuePosService}]
+{./course/server/services/QueuePosService.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{QueueService}]
+{./course/server/services/QueueService.kt}
+
+\section{Модели данных}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Модели авторизации}
+	, label={lst:models:auth}]
+{./course/server/models/AuthorizationRemote.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Модель очереди}
+	, label={lst:models:queue}]
+{./course/server/models/Queue.kt}
+
+\section{Обработчики (Handlers)}
+
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик авторизации}
+	, label={lst:handler:auth}]
+{./course/server/handler/AuthorizationHandler.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик групп}
+	, label={lst:handler:group}]
+{./course/server/handler/GroupHandler.kt}
+\lstinputlisting[language=Kotlin
+	, caption=\leftline{Обработчик очередей}
+	, label={lst:handler:queue}]
+{./course/server/handler/QueueHandler.kt}
+
+\subsection{Docker Compose}
+\begin{lstlisting}[
+	caption=\leftline{Подключение к базе данных},
+	label={lst:docker-compose}
+	]
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "6000:5432"
+    environment:
+      POSTGRES_DB: queue
+      POSTGRES_USER: queue
+      POSTGRES_PASSWORD: arbon1874
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+\end{lstlisting}
+
