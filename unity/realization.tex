@@ -1,0 +1,156 @@
+\section{Разработка}
+
+Разработка игры ведётся на движке Unity.
+Для создания основных игровых механик,
+таких как управление автомобилем, стрельба и генерация врагов,
+используются скрипты на языке C\#.
+
+\subsection{Управление автомобилем}
+
+Ниже представлен код, отвечающий за управление автомобилем:
+\lstinputlisting[language=C,
+	caption=\leftline{Управление автомобилем}]{code/Player/Move.cs}
+
+Этот скрипт (\texttt{Move.cs}) является основным для управления автомобилем.
+Он обрабатывает передвижение автомобиля, вращение колёс, гравитацию и стрельбу.
+В методе \textbf{Start()} инициализируются компоненты автомобиля,
+такие как колёса и точка проверки земли. Метод \textbf{Update()}
+обрабатывает ввод от игрока для движения, прыжков и стрельбы.
+Функция \textbf{Moving(float moveInput)} реализует передвижение
+автомобиля вперёд и назад, а \textbf{RotateWheels(float direction)}
+вращает колёса автомобиля в зависимости от направления движения.
+Метод \textbf{Gravity()} обрабатывает гравитацию и прыжки автомобиля,
+а функция \textbf{Shoot()} реализует стрельбу из автомобиля.
+
+Код для стрельбы из автомобиля:
+\lstinputlisting[language=C,
+	caption=\leftline{Стрельба}]{code/Player/Shooting.cs}
+
+Скрипт \texttt{Shooting.cs} отвечает за стрельбу.
+В методе \textbf{Update()} обрабатывается нажатие кнопки для стрельбы.
+Функция \textbf{Shoot()} создаёт пулю и задаёт её направление и скорость.
+
+Код для управления жизнью игрока:
+\lstinputlisting[language=C,
+	caption=\leftline{Управление жизнью игрока}]{code/Player/Health.cs}
+
+Скрипт \texttt{Health.cs} отвечает за управление здоровьем игрока.
+Метод \textbf{TakeDamage(int damageAmount)} уменьшает здоровье игрока
+при получении урона, а метод \textbf{Heal(int healAmount)} восстанавливает
+здоровье игрока. Функция \textbf{Die()} обрабатывает смерть игрока
+и перезагрузку уровня.
+
+Код для скрипта пули:
+\lstinputlisting[language=C,
+	caption=\leftline{Скрипт для пули}]{code/Player/Bullet.cs}
+
+Скрипт \texttt{Bullet.cs} управляет поведением пули.
+Метод \textbf{Update()} уничтожает пулю,
+если она достигает определённой позиции.
+Функция \textbf{OnCollisionEnter(Collision collision)}
+обрабатывает столкновение пули с врагами или землёй,
+а метод \textbf{OnTriggerEnter(Collider other)}
+обрабатывает столкновение пули с игроком.
+
+\subsection{Враги}                                                             
+                                                                               
+Код для генерации врагов:                                                      
+\lstinputlisting[language=C,
+	caption=\leftline{Генерация врагов}]{code/Enemy/GenMobs.cs}
+
+Скрипт \texttt{GenMobs.cs} отвечает за генерацию врагов на сцене.
+В методе \textbf{Start()} вызывается функция \textbf{Spawn()},
+которая создаёт первого врага при запуске сцены.
+В методе \textbf{Update()} происходит отслеживание времени
+с момента последнего сброса врага.
+Если прошло достаточно времени (\texttt{dropInterval}),
+и на сцене меньше максимального числа врагов (\texttt{max\_count\_mobs}),
+и случайное число удовлетворяет условию (вероятность сброса),
+то вызывается функция \textbf{Spawn()}, создающая нового врага.
+
+Код для движения врагов:                                                           
+\lstinputlisting[language=C,
+	caption=\leftline{Движение врагов}]{code/Enemy/FlyMob.cs}
+
+Скрипт \texttt{FlyMob.cs} отвечает за движение летающего врага.
+В методе \textbf{Start()} сохраняется начальная позиция по оси Y.
+В методе \textbf{Update()} происходит плавное вертикальное движение
+объекта вверх-вниз по синусоидальной траектории.
+Если враг достигает определённой позиции по оси Z (\texttt{deadline}),
+он уничтожается.
+
+Код управления сбросом бомб:                                                  
+\lstinputlisting[language=C,
+	caption=\leftline{Управление сбросом бомб}]{code/Enemy/BallDrop.cs}
+
+Скрипт \texttt{BallDrop.cs} отвечает за сброс бомб врагами.
+В методе \textbf{Update()} отслеживается время
+с момента последнего сброса бомбы.
+Если прошло достаточно времени (\texttt{dropInterval}),
+вызывается функция \textbf{DropBall()},
+которая создаёт бомбу в позиции сброса.
+
+Код взаимодействия бомбы с игроком:                                            
+\lstinputlisting[language=C,
+	caption=\leftline{Взаимодействие бомбы с игроком}]{code/Enemy/BallBehavior.cs}
+
+Скрипт \texttt{BallBehavior.cs} управляет поведением бомбы.
+В методе \textbf{Update()} проверяется позиция бомбы.
+Если она достигает определённой высоты (\texttt{dead\_y}), она уничтожается.
+В методе \textbf{OnCollisionEnter(Collision collision)}
+проверяется столкновение бомбы с землёй,
+а в методе \textbf{OnTriggerEnter(Collider other)} --- столкновение с игроком.
+При столкновении с игроком, игроку наносится урон, и бомба уничтожается.
+
+\subsection{Финишная линия}
+
+Код для обработки финиша:
+\lstinputlisting[language=C
+	, caption=\leftline{Генерация врагов}]
+{code/Place/finishLine.cs}
+
+Этот скрипт (\texttt{finishLine.cs}) отвечает за обработку пересечения
+финишной линии игроком. В методе \textbf{OnTriggerEnter(Collider other)}
+проверяется, столкнулся ли объект, пересекающий финишную линию,
+с игроком (\texttt{Player}).
+Если да, то загружается сцена с меню перезапуска уровня (\texttt{RestartMenu}).
+
+\subsection{Пользовательский интерфейс}                                           
+                                                                               
+Код для отображения жизней пользователя:                                       
+\lstinputlisting[language=C,
+	caption=\leftline{Отображение жизней пользователя}]{code/UI/HealthSlider.cs}
+
+Скрипт \texttt{HealthSlider.cs} управляет отображением текущего уровня
+здоровья игрока на полосе здоровья (\texttt{slider}).
+В методе \textbf{Start()} подписывается на событие изменения здоровья
+из класса \texttt{Health}, чтобы обновлять отображение.
+В методе \textbf{UpdateSlider(int currentHealth, int maxHealth)}
+обновляются значение полосы здоровья и текст текущего уровня здоровья.
+
+Код для обработки меню смерти игрока:                                          
+\lstinputlisting[language=C,
+	caption=\leftline{Меню смерти игрока}]{code/UI/MenuDeadManager.cs}
+
+Скрипт \texttt{MenuDeadManager.cs} отвечает за обработку действий
+в меню смерти игрока. Функция \textbf{Restart()} перезапускает игру,
+загружая сцену "Game", а \textbf{Quit()} завершает приложение.
+
+Код для обработки главного меню:                                               
+\lstinputlisting[language=C,
+	caption=\leftline{Главное меню}]{code/UI/MenuManager.cs}
+
+Скрипт \texttt{MenuManager.cs} управляет главным меню игры.
+Функция \textbf{Play()} запускает игру, загружая сцену "Game",
+а \textbf{Quit()} завершает приложение.
+Функции \textbf{Settings()} и \textbf{ExitSetting()} отвечают
+за переключение между основным и настройочным экранами.
+
+Код для обработки финишного меню:                                              
+\lstinputlisting[language=C,
+	caption=\leftline{Финишное меню}]{code/UI/MenuRestartManager.cs}
+
+Скрипт \texttt{FinishMenuManager.cs} обрабатывает действия
+в финишном меню игры. Функция \textbf{Restart()} перезапускает игру,
+загружая сцену "Game", а \textbf{Quit()} завершает приложение.
+
