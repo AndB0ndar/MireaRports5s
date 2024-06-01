@@ -115,11 +115,20 @@
 с игроком (\texttt{Player}).
 Если да, то загружается сцена с меню перезапуска уровня (\texttt{RestartMenu}).
 
-\subsection{Пользовательский интерфейс}                                           
-                                                                               
-Код для отображения жизней пользователя:                                       
+\subsection{Пользовательский интерфейс}
+
+Код для отслеживания времени игры:                                       
 \lstinputlisting[language=C,
-	caption=\leftline{Отображение жизней пользователя}]{code/UI/HealthSlider.cs}
+	caption=\leftline{Работа таймера}]{code/UI/Timer.cs}
+
+Скрипт \texttt{Timer.cs} управляет таймером игры.
+Функция \textbf{Start()} задает начальное время равное 0 и выводит его.
+Функции \textbf{Update()} изменяет значение текущего времени и выводит его.
+
+Код для отображения жизней пользователя:
+\lstinputlisting[language=C,
+	caption=\leftline{Отображение жизней пользователя}]
+	{code/UI/HealthSlider.cs}
 
 Скрипт \texttt{HealthSlider.cs} управляет отображением текущего уровня
 здоровья игрока на полосе здоровья (\texttt{slider}).
