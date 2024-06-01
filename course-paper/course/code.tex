@@ -1,4 +1,4 @@
-\chapter{GitHub}
+\AppendixChapter{GitHub}
 Ссылки на репозитории в GitHub c реализацией пирложениея курсовой работы:
 
 \begin{itemize}
@@ -8,9 +8,9 @@
 		\href{https://github.com/AndB0ndar/kotlin6s-server}{kotlin6s-server}
 \end{itemize}
 
-\chapter{Клиенское приложение}
+\AppendixChapter{Клиенское приложение}
 
-\section{Retrofit}\label{lst:retrofit}
+\AppendixSection{Retrofit}\label{lst:retrofit}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{ApiService}]
 {./course/code/service/ApiService.kt}
@@ -18,7 +18,7 @@
 	, caption=\leftline{Singleton RetrofitInstance}]
 {./course/code/service/RetrofitInstance.kt}
 
-\section{Адаптеры}
+\AppendixSection{Адаптеры}
 \lstinputlisting [language=Kotlin
 	, caption=\leftline{Адаптер QueueListAdapter}
 	, label={lst:adapter:queue:list}]
@@ -28,18 +28,18 @@
 	, label={lst:adapter:queue:item}]
 {./course/code/adapter/QueueItemAdapter.kt}
 
-\section{AuthManager}\label{lst:auth:manager}
+\AppendixSection{AuthManager}\label{lst:auth:manager}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Класс AuthManager}]
 {./course/code/AuthManager.kt}
 
-\section{Класс приложения (App)}\label{lst:app}
+\AppendixSection{Класс приложения (App)}\label{lst:app}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Класс приложения (App)}]
 {./course/code/App.kt}
 
-\section{Активити и разметка}
-\subsection{LoginActivity}\label{lst:activity:login}
+\AppendixSection{Активити и разметка}
+\AppendixSubsection{LoginActivity}\label{lst:activity:login}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код LoginActivity}]
 {./course/code/LoginActivity.kt}
@@ -47,7 +47,7 @@
 	, caption=\leftline{Разметка LoginActivity}]
 {./course/res/layout/activity_login.xml}
 
-\subsection{RegisterActivity}\label{lst:activity:register}
+\AppendixSubsection{RegisterActivity}\label{lst:activity:register}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код RegisterActivity}]
 {./course/code/RegisterActivity.kt}
@@ -55,7 +55,7 @@
 	, caption=\leftline{Разметка RegisterActivity}]
 {./course/res/layout/activity_register.xml}
 
-\subsection{HomeActivity}\label{lst:activity:home}
+\AppendixSubsection{HomeActivity}\label{lst:activity:home}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код HomeActivity}]
 {./course/code/HomeActivity.kt}
@@ -63,7 +63,7 @@
 	, caption=\leftline{Разметка HomeActivity}]
 {./course/res/layout/activity_home.xml}
 
-\subsection{AddQueueActivity}\label{lst:activity:queue:add}
+\AppendixSubsection{AddQueueActivity}\label{lst:activity:queue:add}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код AddQueueActivity}]
 {./course/code/AddQueueActivity.kt}
@@ -71,7 +71,7 @@
 	, caption=\leftline{Разметка AddQueueActivity}]
 {./course/res/layout/activity_add_queue.xml}
 
-\subsection{ProfileActivity}\label{lst:activity:profile}
+\AppendixSubsection{ProfileActivity}\label{lst:activity:profile}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код ProfileActivity}]
 {./course/code/ProfileActivity.kt}
@@ -79,7 +79,7 @@
 	, caption=\leftline{Разметка ProfileActivity}]
 {./course/res/layout/activity_profile.xml}
 
-\subsection{QueueActivity}\label{lst:activity:queue}
+\AppendixSubsection{QueueActivity}\label{lst:activity:queue}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Код QueueActivity}]
 {./course/code/QueueActivity.kt}
@@ -87,7 +87,7 @@
 	, caption=\leftline{Разметка QueueActivity}]
 {./course/res/layout/activity_queue.xml}
 
-\section{Ресурсы}
+\AppendixSection{Ресурсы}
 \lstinputlisting[language=XML
 	, caption=\leftline{Строковые ресурсы}
 	, label={lst:res:strings}]
@@ -105,9 +105,9 @@
 	, label={lst:res:themes}]
 {./course/res/values/themes.xml}
 
-\chapter{Серверная часть}
+\AppendixChapter{Серверная часть}
 
-\section{Маршрутизация}\label{lst:routing}
+\AppendixSection{Маршрутизация}\label{lst:routing}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Общий маршрут}]
 {./course/server/plugins/Routing.kt}
@@ -121,13 +121,13 @@
 	, caption=\leftline{Обработчик очередей}]
 {./course/server/handler/QueueHandler.kt}
 
-\section{Конфигурация приложения}\label{lst:config}
+\AppendixSection{Конфигурация приложения}\label{lst:config}
 \lstinputlisting[caption=\leftline{Конфигурация приложения}]
 {/home/arbon/Programming/OtherProjects/queue_server/src/main/resources/application.conf}
 
-\section{Работа с базой данных}
+\AppendixSection{Работа с базой данных}
 
-\subsection{Подключение к базе данных}\label{lst:db:connect}
+\AppendixSubsection{Подключение к базе данных}\label{lst:db:connect}
 \begin{lstlisting}[language=Kotlin
 	, caption=\leftline{Подключение к базе данных}]
 fun Application.configureDatabases(): Connection {
@@ -147,7 +147,7 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
 }
 \end{lstlisting}
 
-\subsection{Сервисы работы с базой данных}\label{lst:db:service}
+\AppendixSubsection{Сервисы работы с базой данных}\label{lst:db:service}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{AuthorizationService}]
 {./course/server/services/AuthorizationService.kt}
@@ -164,7 +164,7 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
 	, caption=\leftline{QueueService}]
 {./course/server/services/QueueService.kt}
 
-\section{Модели данных}
+\AppendixSection{Модели данных}
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Модели авторизации}
 	, label={lst:models:auth}]
@@ -174,7 +174,7 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
 	, label={lst:models:queue}]
 {./course/server/models/Queue.kt}
 
-\section{Обработчики (Handlers)}
+\AppendixSection{Обработчики (Handlers)}
 
 \lstinputlisting[language=Kotlin
 	, caption=\leftline{Обработчик авторизации}
@@ -189,7 +189,7 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
 	, label={lst:handler:queue}]
 {./course/server/handler/QueueHandler.kt}
 
-\subsection{Docker Compose}
+\AppendixSubsection{Docker Compose}
 \begin{lstlisting}[
 	caption=\leftline{Подключение к базе данных},
 	label={lst:docker-compose}

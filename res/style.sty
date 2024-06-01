@@ -24,10 +24,14 @@
 % section size
 \usepackage{titlesec}
 
-\titleformat{\chapter}{\fontsize{18pt}{22pt}\bfseries}{\thechapter.}{1em}{}
-\titleformat{\section}{\fontsize{16pt}{20pt}\bfseries}{\thesection.}{1em}{}
-\titleformat{\subsection}{\fontsize{14pt}{18pt}\bfseries}{\thesubsection.}{1em}{}
-\titleformat{\subsubsection}{\fontsize{14pt}{18pt}\bfseries}{\thesubsubsection.}{1em}{}
+\titleformat{\chapter}
+	{\fontsize{18pt}{22pt}\bfseries}{\thechapter.}{1em}{}
+\titleformat{\section}
+	{\fontsize{16pt}{20pt}\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}
+	{\fontsize{14pt}{18pt}\bfseries}{\thesubsection.}{1em}{}
+\titleformat{\subsubsection}
+	{\fontsize{14pt}{18pt}\bfseries}{\thesubsubsection.}{1em}{}
 
 
 % for graphics
@@ -73,8 +77,11 @@
 
 \usepackage{enumitem}
 \setlist{nosep}
+\setlist[itemize]{left=1.25cm}
 \setlist[enumerate]{label*=\arabic*.}
+\setlist[enumerate]{left=1.25cm}
 \setlist[description]{style=nextline}
+\setlist[description]{left=1.25cm}
 
 % for headers and footers
 \usepackage{fancyhdr}
@@ -100,17 +107,64 @@
 }
 \newcommand\includegrph[2][width=0.8\textwidth]{\includegraphics[#1]{#2}}
 
-\newcommand{\Appendix}{
-	\appendix
-	\titleformat{\chapter}{\fontsize{18pt}{22pt}\bfseries}{\appendixname~\thechapter.}{1em}{}
-}
-
+% new command for sections
 \newcommand\Chapter[1]{
 	\refstepcounter{chapter}
 	\chapter*{
 		\textbf{\chaptername\ \arabic{chapter}.}
 		\raggedright #1
 	}
-	\addcontentsline{toc}{chapter}{\arabic{chapter} #1}
+	\addcontentsline{toc}{chapter}{\arabic{chapter}.\ #1}
+}
+\newcommand\Section[1]{
+	\refstepcounter{section}
+	\section*{
+		\textbf{\arabic{chapter}.\arabic{section}.}
+		\raggedright #1
+	}
+	\addcontentsline{toc}{section}{\arabic{chapter}.\arabic{section}.\ #1}
+}
+\newcommand\Subsection[1]{
+	\refstepcounter{subsection}
+	\subsection*{
+		\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.}
+		\raggedright #1
+	}
+	\addcontentsline{toc}{subsection}
+		{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\ #1}
+}
+\newcommand\Subsubsection[1]{
+	\refstepcounter{subsubsection}
+	\subsubsection*{
+		\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+		\raggedright #1
+	}
+	\addcontentsline{toc}{subsubsection}
+		{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\ #1}
+}
+
+
+% new command for appendix
+\newcommand\AppendixChapter[1]{
+	\refstepcounter{chapter}
+	\chapter*{
+		\textbf{\appendixname~\thechapter.}
+		\raggedright #1
+	}
+	\addcontentsline{toc}{chapter}{\appendixname~\thechapter.\ #1}
+}
+\newcommand\AppendixSection[1]{
+	\refstepcounter{section}
+	\section*{
+		\textbf{\appendixname~\thesection.}
+		\raggedright #1
+	}
+}
+\newcommand\AppendixSubsection[1]{
+	\refstepcounter{subsection}
+	\section*{
+		\textbf{\appendixname~\thesubsection.}
+		\raggedright #1
+	}
 }
 
