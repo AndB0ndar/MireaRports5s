@@ -4,8 +4,6 @@
 \usepackage{../res/android}
 \graphicspath{{./course/img}}
 
-\newcommand{\chapterbreak}{\clearpage}
-
 \author{Bondar Andrei Renatovich}
 \date{\today}
 
@@ -28,6 +26,9 @@
 \include{./course/literature}
 
 \appendix
+\makeatletter
+\gdef\thechapter{\Asbuk{chapter}}
+\makeatother
 
 \include{./course/code}
 

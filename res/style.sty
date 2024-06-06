@@ -24,15 +24,15 @@
 % section size
 \usepackage{titlesec}
 
-\titleformat{\chapter}
-	{\fontsize{18pt}{22pt}\bfseries}{\thechapter.}{1em}{}
+\titleformat{\chapter}[block]
+  {\fontsize{18pt}{22pt}\bfseries}
+  {\chaptertitlename\ \thechapter.}{0.5em}{}
 \titleformat{\section}
 	{\fontsize{16pt}{20pt}\bfseries}{\thesection.}{1em}{}
 \titleformat{\subsection}
 	{\fontsize{14pt}{18pt}\bfseries}{\thesubsection.}{1em}{}
 \titleformat{\subsubsection}
 	{\fontsize{14pt}{18pt}\bfseries}{\thesubsubsection.}{1em}{}
-
 
 % for graphics
 \usepackage{graphicx}
@@ -77,11 +77,23 @@
 
 \usepackage{enumitem}
 \setlist{nosep}
-\setlist[itemize]{left=1.25cm}
+\setlist[itemize]{
+	leftmargin=0cm,
+	itemindent=1.25cm,
+	labelwidth=-0.6cm
+}
 \setlist[enumerate]{label*=\arabic*.}
-\setlist[enumerate]{left=1.25cm}
+\setlist[enumerate]{
+	leftmargin=0cm,
+	itemindent=1.25cm,
+	labelwidth=-0.65cm
+}
 \setlist[description]{style=nextline}
-\setlist[description]{left=1.25cm}
+\setlist[description]{
+	leftmargin=0cm,
+	itemindent=1.25cm,
+	labelwidth=-0.65cm
+}
 
 % for headers and footers
 \usepackage{fancyhdr}
@@ -110,24 +122,21 @@
 % new command for sections
 \newcommand\Chapter[1]{
 	\refstepcounter{chapter}
-	\chapter*{
-		\textbf{\chaptername\ \arabic{chapter}.}
+	\chapter*{\textbf{ГЛАВА\ \arabic{chapter}.}
 		\raggedright #1
 	}
-	\addcontentsline{toc}{chapter}{\arabic{chapter}.\ #1}
+	\addcontentsline{toc}{chapter}{ГЛАВА\ \arabic{chapter}.\ #1}
 }
 \newcommand\Section[1]{
 	\refstepcounter{section}
-	\section*{
-		\textbf{\arabic{chapter}.\arabic{section}.}
+	\section*{\textbf{\arabic{chapter}.\arabic{section}.}
 		\raggedright #1
 	}
 	\addcontentsline{toc}{section}{\arabic{chapter}.\arabic{section}.\ #1}
 }
 \newcommand\Subsection[1]{
 	\refstepcounter{subsection}
-	\subsection*{
-		\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.}
+	\subsection*{\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.}
 		\raggedright #1
 	}
 	\addcontentsline{toc}{subsection}
@@ -135,13 +144,17 @@
 }
 \newcommand\Subsubsection[1]{
 	\refstepcounter{subsubsection}
-	\subsubsection*{
-		\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
+	\subsubsection*{\textbf{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.}
 		\raggedright #1
 	}
 	\addcontentsline{toc}{subsubsection}
 		{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\ #1}
 }
+\titlespacing{\chapter}{1.25cm}{0pt}{0pt}
+\titlespacing{\section}{1.25cm}{0pt}{0pt}
+\titlespacing{\subsection}{1.25cm}{0pt}{0pt}
+\titlespacing{\subsubsection}{1.25cm}{0pt}{0pt}
+\titlespacing{\paragraph}{1.25cm}{0pt}{0pt}
 
 
 % new command for appendix
