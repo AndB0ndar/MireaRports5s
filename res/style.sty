@@ -8,6 +8,8 @@
 \usepackage[labelsep=period]{caption}
 \captionsetup[figure]{labelsep=endash}
 
+\usepackage[none]{hyphenat} % no word breaks
+
 
 \frenchspacing
 \pagestyle{plain}
@@ -80,7 +82,8 @@
 \setlist[itemize]{
 	leftmargin=0cm,
 	itemindent=1.25cm,
-	labelwidth=-0.6cm
+	labelwidth=-0.6cm,
+	label=--
 }
 \setlist[enumerate]{label*=\arabic*.}
 \setlist[enumerate]{
@@ -122,10 +125,10 @@
 % new command for sections
 \newcommand\Chapter[1]{
 	\refstepcounter{chapter}
-	\chapter*{\textbf{ГЛАВА\ \arabic{chapter}.}
+	\chapter*{\textbf{ГЛАВА\;\arabic{chapter}.}
 		\raggedright #1
 	}
-	\addcontentsline{toc}{chapter}{ГЛАВА\ \arabic{chapter}.\ #1}
+	\addcontentsline{toc}{chapter}{ГЛАВА\;\arabic{chapter}.\ #1}
 }
 \newcommand\Section[1]{
 	\refstepcounter{section}
@@ -160,23 +163,20 @@
 % new command for appendix
 \newcommand\AppendixChapter[1]{
 	\refstepcounter{chapter}
-	\chapter*{
-		\textbf{\appendixname~\thechapter.}
+	\chapter*{\textbf{\appendixname\;\thechapter.}
 		\raggedright #1
 	}
 	\addcontentsline{toc}{chapter}{\appendixname~\thechapter.\ #1}
 }
 \newcommand\AppendixSection[1]{
 	\refstepcounter{section}
-	\section*{
-		\textbf{\appendixname~\thesection.}
+	\section*{\textbf{\appendixname\;\thesection.}
 		\raggedright #1
 	}
 }
 \newcommand\AppendixSubsection[1]{
 	\refstepcounter{subsection}
-	\section*{
-		\textbf{\appendixname~\thesubsection.}
+	\section*{\textbf{\appendixname\;\thesubsection.}
 		\raggedright #1
 	}
 }
